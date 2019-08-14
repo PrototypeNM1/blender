@@ -194,7 +194,7 @@ typedef struct tagPOINTER_TOUCH_INFO {
 
 typedef BOOL(API *GHOST_WIN32_GetPointerInfo)(UINT32 pointerId, POINTER_INFO *pointerInfo);
 typedef BOOL(API *GHOST_WIN32_GetPointerPenInfo)(UINT32 pointerId, POINTER_PEN_INFO *penInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfo)(UINT32 pointerId, POINTER_TOUCH_INFO *penInfo);
+typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfo)(UINT32 pointerId, POINTER_TOUCH_INFO *touchInfo);
 
 struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 pointerId;
@@ -204,6 +204,7 @@ struct GHOST_PointerInfoWin32 {
   GHOST_TButtonMask buttonMask;
   POINT pixelLocation;
   GHOST_TabletData tabletData;
+  GHOST_TInt32 isTouch;
 };
 
 /**

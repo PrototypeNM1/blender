@@ -970,32 +970,39 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(GHOST_PointerInfoWin32 *pointer
   pointerInfo->tabletData.Xtilt = 0.0f;
   pointerInfo->tabletData.Ytilt = 0.0f;
 
-  if (pointerApiInfo.pointerType != PT_PEN) {
-    return GHOST_kFailure;
+  pointerInfo->isTouch = 0;
+
+  switch (pointerApiInfo.pointerType) {
+    case PT_PEN:
+      POINTER_PEN_INFO pointerPenInfo;
+      if (m_fpGetPointerPenInfo &&
+          m_fpGetPointerPenInfo(pointerInfo->pointerId, &pointerPenInfo)) {
+        pointerInfo->tabletData.Active = GHOST_kTabletModeStylus;
+
+        if (pointerPenInfo.penMask & PEN_MASK_PRESSURE) {
+          pointerInfo->tabletData.Pressure = pointerPenInfo.pressure / 1024.0f;
+        }
+
+        if (pointerPenInfo.penFlags & PEN_FLAG_ERASER) {
+          pointerInfo->tabletData.Active = GHOST_kTabletModeEraser;
+        }
+
+        if (pointerPenInfo.penFlags & PEN_MASK_TILT_X) {
+          pointerInfo->tabletData.Xtilt = fmin(fabs(pointerPenInfo.tiltX / 90), 1.0f);
+        }
+
+        if (pointerPenInfo.penFlags & PEN_MASK_TILT_Y) {
+          pointerInfo->tabletData.Ytilt = fmin(fabs(pointerPenInfo.tiltY / 90), 1.0f);
+        }
+      }
+
+      return GHOST_kSuccess;
+    case PT_TOUCH:
+      pointerInfo->isTouch = 1;
+      return GHOST_kSuccess;
+    default:
+      return GHOST_kFailure;
   }
-
-  POINTER_PEN_INFO pointerPenInfo;
-  if (m_fpGetPointerPenInfo && m_fpGetPointerPenInfo(pointerInfo->pointerId, &pointerPenInfo)) {
-    pointerInfo->tabletData.Active = GHOST_kTabletModeStylus;
-
-    if (pointerPenInfo.penMask & PEN_MASK_PRESSURE) {
-      pointerInfo->tabletData.Pressure = pointerPenInfo.pressure / 1024.0f;
-    }
-
-    if (pointerPenInfo.penFlags & PEN_FLAG_ERASER) {
-      pointerInfo->tabletData.Active = GHOST_kTabletModeEraser;
-    }
-
-    if (pointerPenInfo.penFlags & PEN_MASK_TILT_X) {
-      pointerInfo->tabletData.Xtilt = fmin(fabs(pointerPenInfo.tiltX / 90), 1.0f);
-    }
-
-    if (pointerPenInfo.penFlags & PEN_MASK_TILT_Y) {
-      pointerInfo->tabletData.Ytilt = fmin(fabs(pointerPenInfo.tiltY / 90), 1.0f);
-    }
-  }
-
-  return GHOST_kSuccess;
 }
 
 void GHOST_WindowWin32::setTabletData(GHOST_TabletData *pTabletData)

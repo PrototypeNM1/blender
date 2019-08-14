@@ -40,6 +40,7 @@
 #include "GHOST_EventCursor.h"
 #include "GHOST_EventKey.h"
 #include "GHOST_EventWheel.h"
+#include "GHOST_EventTouch.h"
 #include "GHOST_TimerTask.h"
 #include "GHOST_TimerManager.h"
 #include "GHOST_WindowManager.h"
@@ -882,9 +883,33 @@ GHOST_Event *GHOST_SystemWin32::processPointerEvent(GHOST_TEventType type,
     return NULL;
   }
 
-  if (!pointerInfo.isPrimary) {
+  if (pointerInfo.isTouch) {
+    // const GHOST_TabletData *tabletData = window->GetTabletData();
+    // if (!tabletData->InRange) {
+    //  system->setCursorPosition(pointerInfo.pixelLocation.x, pointerInfo.pixelLocation.y);
+    //}
+    GHOST_TTouchPhase phase;
+    switch (type) {
+      case GHOST_kEventButtonDown:
+        phase = GHOST_kTouchDown;
+        break;
+      case GHOST_kEventCursorMove:
+        phase = GHOST_kTouchMove;
+        break;
+      case GHOST_kEventButtonUp:
+        phase = GHOST_kTouchUp;
+        break;
+      default:
+        return NULL;
+    }
     eventHandled = true;
-    return NULL;  // For multi-touch displays we ignore these events
+    return new GHOST_EventTouch(system->getMilliSeconds(),
+                                GHOST_kEventTouch,
+                                window,
+                                pointerInfo.pointerId,
+                                pointerInfo.pixelLocation.x,
+                                pointerInfo.pixelLocation.y,
+                                phase);
   }
 
   system->setCursorPosition(pointerInfo.pixelLocation.x, pointerInfo.pixelLocation.y);
