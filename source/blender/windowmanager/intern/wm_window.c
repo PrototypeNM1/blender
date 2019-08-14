@@ -1547,6 +1547,13 @@ static int ghost_event_proc(GHOST_EventHandle evt, GHOST_TUserDataPtr C_void_ptr
         wm_event_add_ghostevent(wm, win, type, data);
         break;
       }
+      case GHOST_kEventTouch: {
+        GHOST_TEventTouchData *td = data;
+
+        wm_cursor_position_from_ghost(win, &td->x, &td->y);
+        wm_event_add_ghostevent(wm, win, type, data);
+        break;
+      }
       default:
         wm_event_add_ghostevent(wm, win, type, data);
         break;

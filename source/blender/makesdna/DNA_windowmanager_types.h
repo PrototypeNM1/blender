@@ -380,6 +380,7 @@ enum {
   KMI_TYPE_TEXTINPUT = 3,
   KMI_TYPE_TIMER = 4,
   KMI_TYPE_NDOF = 5,
+  KMI_TYPE_TOUCH = 6,
 };
 
 /* stored in WM, the actively used keymaps */

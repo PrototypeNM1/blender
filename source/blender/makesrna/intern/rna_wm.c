@@ -379,6 +379,7 @@ const EnumPropertyItem rna_enum_event_type_items[] = {
      0,
      "ActionZone Fullscreen",
      "AZone FullScr"},
+    {TOUCH, "TOUCH", 0, "Touch", ""},
     {0, NULL, 0, NULL, NULL},
 };
 
@@ -417,6 +418,7 @@ const EnumPropertyItem rna_enum_event_type_mask_items[] = {
     {EVT_TYPE_MASK_NDOF, "NDOF", 0, "NDOF", ""},
     {EVT_TYPE_MASK_TWEAK, "TWEAK", 0, "Tweak", ""},
     {EVT_TYPE_MASK_ACTIONZONE, "ACTIONZONE", 0, "Action Zone", ""},
+    {EVT_TYPE_MASK_TOUCH, "TOUCH", 0, "Touch", ""},
     {0, NULL, 0, NULL, NULL},
 };
 
@@ -892,6 +894,10 @@ static void rna_wmKeyMapItem_map_type_set(PointerRNA *ptr, int value)
         kmi->type = NDOF_MOTION;
         kmi->val = KM_NOTHING;
         break;
+      case KMI_TYPE_TOUCH:
+        kmi->type = TOUCH;
+        kmi->val = KM_ANY;
+        break;
     }
   }
 }
@@ -950,7 +956,7 @@ static const EnumPropertyItem *rna_KeyMapItem_value_itemf(bContext *UNUSED(C),
 {
   int map_type = rna_wmKeyMapItem_map_type_get(ptr);
 
-  if (map_type == KMI_TYPE_MOUSE || map_type == KMI_TYPE_KEYBOARD || map_type == KMI_TYPE_NDOF) {
+  if (map_type == KMI_TYPE_MOUSE || map_type == KMI_TYPE_KEYBOARD || map_type == KMI_TYPE_NDOF || map_type == KMI_TYPE_TOUCH) {
     return event_keymouse_value_items;
   }
   if (map_type == KMI_TYPE_TWEAK) {

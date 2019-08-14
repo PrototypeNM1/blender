@@ -625,6 +625,10 @@ typedef struct wmNDOFMotionData {
 } wmNDOFMotionData;
 #endif /* WITH_INPUT_NDOF */
 
+typedef struct wmTouchData {
+  int id;
+} wmTouchData;
+
 /** Timer flags. */
 typedef enum {
   /** Do not attempt to free customdata pointer even if non-NULL. */

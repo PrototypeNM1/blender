@@ -32,6 +32,7 @@ enum {
   EVT_DATA_TIMER = 2,
   EVT_DATA_DRAGDROP = 3,
   EVT_DATA_NDOF_MOTION = 4,
+  EVT_DATA_TOUCH = 5,
 };
 
 /* tablet active, matches GHOST_TTabletMode */
@@ -279,6 +280,8 @@ enum {
   /* the end */
   NDOF_LAST,
 
+  TOUCH,
+
   /* ********** End of Input devices. ********** */
 
   /* ********** Start of Blender internal events. ********** */
@@ -372,6 +375,9 @@ enum {
 /* test whether the event is a NDOF event */
 #define ISNDOF(event_type) ((event_type) >= NDOF_MOTION && (event_type) < NDOF_LAST)
 
+/* test whether the event is a touch event */
+#define ISTOUCH(event_type) ((event_type) == TOUCH)
+
 #define IS_EVENT_ACTIONZONE(event_type) \
   ELEM(event_type, EVT_ACTIONZONE_AREA, EVT_ACTIONZONE_REGION, EVT_ACTIONZONE_FULLSCREEN)
 
@@ -408,10 +414,12 @@ enum eEventType_Mask {
   EVT_TYPE_MASK_TWEAK = (1 << 7),
   /* IS_EVENT_ACTIONZONE */
   EVT_TYPE_MASK_ACTIONZONE = (1 << 8),
+  /* ISTOUCH*/
+  EVT_TYPE_MASK_TOUCH = (1 << 9),
 };
 #define EVT_TYPE_MASK_ALL \
   (EVT_TYPE_MASK_KEYBOARD | EVT_TYPE_MASK_MOUSE | EVT_TYPE_MASK_NDOF | EVT_TYPE_MASK_TWEAK | \
-   EVT_TYPE_MASK_ACTIONZONE)
+   EVT_TYPE_MASK_ACTIONZONE | EVT_TYPE_MASK_TOUCH)
 
 #define EVT_TYPE_MASK_HOTKEY_INCLUDE \
   (EVT_TYPE_MASK_KEYBOARD | EVT_TYPE_MASK_MOUSE | EVT_TYPE_MASK_NDOF)
