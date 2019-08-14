@@ -1472,6 +1472,87 @@ static void VIEW2D_OT_ndof(wmOperatorType *ot)
 }
 #endif /* WITH_INPUT_NDOF */
 
+static int view2d_touch_invoke(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  wmWindow *window = CTX_wm_window(C);
+  v2dViewPanData *vpd;
+  View2D *v2d;
+
+  /* set up customdata */
+  if (!view_pan_init(C, op)) {
+    return OPERATOR_PASS_THROUGH;
+  }
+
+  vpd = op->customdata;
+  v2d = vpd->v2d;
+
+  /* set initial settings */
+  vpd->startx = vpd->lastx = event->x;
+  vpd->starty = vpd->lasty = event->y;
+  vpd->invoke_event = event->type;
+
+  RNA_int_set(op->ptr, "deltax", 0);
+  RNA_int_set(op->ptr, "deltay", 0);
+
+  /* add temp handler */
+  WM_event_add_modal_handler(C, op);
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static int view2d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  v2dViewPanData *vpd = op->customdata;
+
+  /* execute the events */
+  if (event->val == KM_CLICK_DRAG) {
+    /* calculate new delta transform, then store mouse-coordinates for next-time */
+    RNA_int_set(op->ptr, "deltax", (vpd->lastx - event->x));
+    RNA_int_set(op->ptr, "deltay", (vpd->lasty - event->y));
+
+    vpd->lastx = event->x;
+    vpd->lasty = event->y;
+
+    view_pan_apply(C, op);
+  }
+  else if (event->type == vpd->invoke_event || event->type == ESCKEY) {
+    if (event->val == KM_RELEASE) {
+      /* calculate overall delta mouse-movement for redo */
+      RNA_int_set(op->ptr, "deltax", (vpd->startx - vpd->lastx));
+      RNA_int_set(op->ptr, "deltay", (vpd->starty - vpd->lasty));
+
+      view_pan_exit(op);
+
+      return OPERATOR_FINISHED;
+    }
+  }
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static void VIEW2D_OT_touch(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Touch Pan/Zoom";
+  ot->idname = "VIEW2D_OT_touch";
+  ot->description = "Use a touch device to pan/zoom the view";
+
+  /* api callbacks */
+  ot->invoke = view2d_touch_invoke;
+  ot->modal = view2d_touch_modal;
+  //ot->poll = view2d_poll; // XXX from ndof
+  ot->cancel = view_pan_cancel;  // XXX replace to head off dependency on pan code
+
+  /* operator is modal */
+  /* flags */
+  ot->flag = OPTYPE_LOCK_BYPASS; // XXX from ndof
+  //ot->flag = OPTYPE_BLOCKING | OPTYPE_GRAB_CURSOR_XY; // XXX from panning
+
+  /* rna - must keep these in sync with the other operators */
+  RNA_def_int(ot->srna, "deltax", 0, INT_MIN, INT_MAX, "Delta X", "", INT_MIN, INT_MAX);
+  RNA_def_int(ot->srna, "deltay", 0, INT_MIN, INT_MAX, "Delta Y", "", INT_MIN, INT_MAX);
+}
+
 /** \} */
 
 /* -------------------------------------------------------------------- */
@@ -2255,6 +2336,8 @@ void ED_operatortypes_view2d(void)
 #ifdef WITH_INPUT_NDOF
   WM_operatortype_append(VIEW2D_OT_ndof);
 #endif
+
+  WM_operatortype_append(VIEW2D_OT_touch);
 
   WM_operatortype_append(VIEW2D_OT_smoothview);
 
