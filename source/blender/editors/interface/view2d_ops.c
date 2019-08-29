@@ -1533,8 +1533,6 @@ static int view2d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
     }
     case KM_CLICK_DRAG: {
       Touch *touchlast = (Touch *)BLI_ghash_lookup(td->touchpoints, POINTER_FROM_INT(wmtd->id));
-      int dx = touchlast->x - event->x;
-      int dy = touchlast->y - event->y;
 
       switch (BLI_ghash_len(td->touchpoints)) {
         // Pan the view for single touch
@@ -1542,54 +1540,78 @@ static int view2d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
           if (view_pan_init(C, op)) {
             v2dViewPanData *vpd = op->customdata;
 
+            int dx = touchlast->x - event->x;
+            int dy = touchlast->y - event->y;
+
             view_pan_apply_ex(C, vpd, dx, dy);
 
             view_pan_exit(op);
 
-            // view_pan_init assigns to op->customdata, reassign to td to continue modal operation
+            // restore touch operator context overwritten by view_pan_init
             op->customdata = td;
           }
           break;
         }
         // Pan and zoom the view for double touch
         case 2: {
-          if (view_zoomdrag_init(C, op)) {
-            v2dViewZoomData *vzd = op->customdata;
-            float zoom_factor = 0.0f;
+          GHashIterator *it = BLI_ghashIterator_new(td->touchpoints);
+          for (it; !BLI_ghashIterator_done(it); BLI_ghashIterator_step(it)) {
+            if (POINTER_AS_INT(BLI_ghashIterator_getKey(it)) != wmtd->id) {
+              Touch *t2 = (Touch *)BLI_ghashIterator_getValue(it);
 
-            GHashIterator *it = BLI_ghashIterator_new(td->touchpoints);
-            for (it; !BLI_ghashIterator_done(it); BLI_ghashIterator_step(it)) {
-              if (POINTER_AS_INT(BLI_ghashIterator_getKey(it)) != wmtd->id) {
-                Touch *t2 = (Touch *)BLI_ghashIterator_getValue(it);
-                int t1_pt_last[] = {touchlast->x, touchlast->y};
-                int t1_pt_curr[] = {event->x, event->y};
-                int t2_pt[] = {t2->x, t2->y};
+              float tmoved_last[] = {(float)touchlast->x, (float)touchlast->y};
+              float tmoved_curr[] = {(float)event->x, (float)event->y};
+              float tunmoved[] = {(float)t2->x, (float)t2->y};
 
-                float offset_last = len_v2v2_int(t1_pt_last, t2_pt);
-                float offset_curr = len_v2v2_int(t1_pt_curr, t2_pt);
-                zoom_factor = (1.0f - (offset_last / offset_curr));
+              float midpoint_last[2], midpoint_curr[2];
+              interp_v2_v2v2(midpoint_last, tmoved_last, tunmoved, 0.5f);
+              interp_v2_v2v2(midpoint_curr, tmoved_curr, tunmoved, 0.5f);
 
-                break;
+              if (view_pan_init(C, op)) {
+                v2dViewPanData *vpd = op->customdata;
+
+                float pan_delta[2];
+                sub_v2_v2v2(pan_delta, midpoint_last, midpoint_curr);
+
+                view_pan_apply_ex(C, vpd, pan_delta[0], pan_delta[1]);
+
+                view_pan_exit(op);
+
+                // restore touch operator context overwritten by view_pan_init
+                op->customdata = td;
               }
+
+              if (view_zoomdrag_init(C, op)) {
+                v2dViewZoomData *vzd = op->customdata;
+
+                float len_last = len_v2v2(tmoved_last, tunmoved);
+                float len_curr = len_v2v2(tmoved_curr, tunmoved);
+                float zoom_factor = (1.0f - (len_last / len_curr)) / 2.0f;
+
+                float mid_region_co[] = {midpoint_curr[0] - vzd->ar->winrct.xmin,
+                                         midpoint_curr[1] - vzd->ar->winrct.ymin};
+
+                UI_view2d_region_to_view(
+                    vzd->v2d, mid_region_co[0], mid_region_co[1], &vzd->mx_2d, &vzd->my_2d);
+
+                bool do_zoom_xy[2];
+                view_zoom_axis_lock_defaults(C, do_zoom_xy);
+
+                float zoom_x = do_zoom_xy[0] ? zoom_factor : 0.0f;
+                float zoom_y = do_zoom_xy[1] ? zoom_factor : 0.0f;
+                view_zoomstep_apply_ex(C, vzd, true, zoom_x, zoom_y);
+
+                view_zoomstep_exit(op);
+
+                // restore touch operator context overwritten by view_zoomdrag_init
+                op->customdata = td;
+              }
+
+              break;
             }
-            BLI_ghashIterator_free(it);
-
-            bool do_zoom_xy[2];
-
-            view_zoom_axis_lock_defaults(C, do_zoom_xy);
-
-            view_zoomstep_apply_ex(C,
-                                   vzd,
-                                   false,
-                                   do_zoom_xy[0] ? zoom_factor : 0.0f,
-                                   do_zoom_xy[1] ? zoom_factor : 0.0f);
-
-            view_zoomstep_exit(op);
-
-            // view_zoomdrag_init assigns to op->customdata, reassign to td to continue modal
-            // operation
-            op->customdata = td;
           }
+          BLI_ghashIterator_free(it);
+
           break;
         }
         default: {
