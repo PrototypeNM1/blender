@@ -1478,6 +1478,13 @@ typedef struct v2dTouchData {
   GHash *touchpoints;
 } v2dTouchData;
 
+static int view2d_touch_exit(v2dTouchData *td)
+{
+  BLI_ghash_free(td->touchpoints, NULL, MEM_freeN);
+  td->touchpoints = NULL;
+  MEM_freeN(td);
+}
+
 static int view2d_touch_invoke(bContext *C, wmOperator *op, const wmEvent *event)
 {
   v2dTouchData *td;
@@ -1628,9 +1635,7 @@ static int view2d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
       BLI_ghash_remove(td->touchpoints, POINTER_FROM_INT(wmtd->id), NULL, MEM_freeN);
 
       if (BLI_ghash_len(td->touchpoints) == 0) {
-        BLI_ghash_free(td->touchpoints, NULL, NULL);
-        td->touchpoints = NULL;
-        MEM_freeN(td);
+        view2d_touch_exit(td);
         return OPERATOR_FINISHED;
       }
       break;
@@ -1643,6 +1648,13 @@ static int view2d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
   return OPERATOR_RUNNING_MODAL;
 }
 
+static void view2d_touch_cancel(bContext *C, wmOperator *op)
+{
+  if (op->customdata) {
+    view2d_touch_exit((v2dTouchData *)op->customdata);
+  }
+}
+
 static void VIEW2D_OT_touch(wmOperatorType *ot)
 {
   /* identifiers */
@@ -1651,10 +1663,10 @@ static void VIEW2D_OT_touch(wmOperatorType *ot)
   ot->description = "Use a touch device to pan/zoom the view";
 
   /* api callbacks */
+  ot->poll = view2d_poll;
   ot->invoke = view2d_touch_invoke;
   ot->modal = view2d_touch_modal;
-  // ot->poll = view2d_poll; // XXX from ndof
-  // ot->cancel = view_pan_cancel;  // XXX replace to head off dependency on pan code
+  ot->cancel = view2d_touch_cancel;
 
   /* operator is modal */
   /* flags */
