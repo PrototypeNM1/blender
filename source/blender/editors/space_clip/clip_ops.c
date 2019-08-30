@@ -43,6 +43,7 @@
 #include "BLI_rect.h"
 #include "BLI_task.h"
 #include "BLI_string.h"
+#include "BLI_ghash.h"
 
 #include "BLT_translation.h"
 
@@ -62,6 +63,7 @@
 
 #include "ED_screen.h"
 #include "ED_clip.h"
+#include "ED_touch.h"
 
 #include "UI_interface.h"
 
@@ -1591,6 +1593,182 @@ void CLIP_OT_view_ndof(wmOperatorType *ot)
   ot->poll = ED_space_clip_view_clip_poll;
 }
 #endif /* WITH_INPUT_NDOF */
+
+/********************** Touch operator *********************/
+
+typedef struct TouchData {
+  GHash *touchpoints;
+} TouchData;
+
+static int clip_touch_exit(TouchData *td)
+{
+  BLI_ghash_free(td->touchpoints, NULL, MEM_freeN);
+  td->touchpoints = NULL;
+  MEM_freeN(td);
+}
+
+static int clip_touch_invoke(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  TouchData *td;
+  Touch *touch;
+
+  wmTouchData *wmtd = (wmTouchData *)event->customdata;
+
+  if (event->val == KM_PRESS) {
+    td = MEM_callocN(sizeof(TouchData), "TouchData");
+    // WARNING: BLI_ghash_int_new uses BLI_ghashutil_intcmp for hash comparison, which treats the
+    // void* key as an int without indirection
+    td->touchpoints = BLI_ghash_int_new("touchpoints");
+    op->customdata = td;
+
+    touch = MEM_callocN(sizeof(Touch), "touch");
+    touch->id = wmtd->id;
+    touch->x = event->x;
+    touch->y = event->y;
+    BLI_ghash_insert(td->touchpoints, POINTER_FROM_INT(touch->id), (void *)touch);
+  }
+  else {
+    return OPERATOR_FINISHED;
+  }
+
+  /* add temp handler */
+  WM_event_add_modal_handler(C, op);
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static int clip_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  TouchData *td = op->customdata;
+  wmTouchData *wmtd = (wmTouchData *)event->customdata;
+
+  if (event->type != TOUCH) {
+    return OPERATOR_PASS_THROUGH;
+  }
+
+  switch (event->val) {
+    case KM_PRESS: {
+      if (!BLI_ghash_haskey(td->touchpoints, POINTER_FROM_INT(wmtd->id))) {
+        Touch *touch = MEM_callocN(sizeof(Touch), "touch");
+        touch->id = wmtd->id;
+        touch->x = event->x;
+        touch->y = event->y;
+        BLI_ghash_insert(td->touchpoints, POINTER_FROM_INT(touch->id), (void *)touch);
+      }
+      break;
+    }
+    case KM_CLICK_DRAG: {
+      Touch *touchlast = (Touch *)BLI_ghash_lookup(td->touchpoints, POINTER_FROM_INT(wmtd->id));
+      SpaceClip *sc = CTX_wm_space_clip(C);
+      ARegion *ar = CTX_wm_region(C);
+
+      switch (BLI_ghash_len(td->touchpoints)) {
+        // Pan the view for single touch
+        case 1: {
+          float offset[2] = {(touchlast->x - event->x) / sc->zoom,
+                             (touchlast->y - event->y) / sc->zoom};
+
+          sc->xof += offset[0];
+          sc->yof += offset[1];
+
+          ED_region_tag_redraw(ar);
+
+          break;
+        }
+        // Pan and zoom the view for double touch
+        case 2: {
+          GHashIterator *it = BLI_ghashIterator_new(td->touchpoints);
+          for (it; !BLI_ghashIterator_done(it); BLI_ghashIterator_step(it)) {
+            if (POINTER_AS_INT(BLI_ghashIterator_getKey(it)) != wmtd->id) {
+              Touch *t2 = (Touch *)BLI_ghashIterator_getValue(it);
+
+              float tmoved_last[] = {(float)touchlast->x, (float)touchlast->y};
+              float tmoved_curr[] = {(float)event->x, (float)event->y};
+              float tunmoved[] = {(float)t2->x, (float)t2->y};
+
+              float midpoint_last[2], midpoint_curr[2];
+              interp_v2_v2v2(midpoint_last, tmoved_last, tunmoved, 0.5f);
+              interp_v2_v2v2(midpoint_curr, tmoved_curr, tunmoved, 0.5f);
+
+              float pan_delta[2];
+              sub_v2_v2v2(pan_delta, midpoint_last, midpoint_curr);
+
+              float len_last = len_v2v2(tmoved_last, tunmoved);
+              float len_curr = len_v2v2(tmoved_curr, tunmoved);
+              float zoom_factor = (2.0f - (len_last / len_curr));
+
+              float mid_region_co[] = {midpoint_curr[0] - ar->winrct.xmin,
+                                       midpoint_curr[1] - ar->winrct.ymin};
+
+              float mid_view_co[2];
+              UI_view2d_region_to_view(
+                  &ar->v2d, mid_region_co[0], mid_region_co[1], &mid_view_co[0], &mid_view_co[1]);
+
+              sc->xof += pan_delta[0] / sc->zoom;
+              sc->yof += pan_delta[1] / sc->zoom;
+              sclip_zoom_set_factor(C, zoom_factor, mid_view_co, true);
+
+              ED_region_tag_redraw(ar);
+
+              break;
+            }
+          }
+          BLI_ghashIterator_free(it);
+
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      touchlast->x = event->x;
+      touchlast->y = event->y;
+
+      break;
+    }
+    case KM_RELEASE: {
+      BLI_ghash_remove(td->touchpoints, POINTER_FROM_INT(wmtd->id), NULL, MEM_freeN);
+
+      if (BLI_ghash_len(td->touchpoints) == 0) {
+        BLI_ghash_free(td->touchpoints, NULL, NULL);
+        td->touchpoints = NULL;
+        MEM_freeN(td);
+        return OPERATOR_FINISHED;
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static void clip_touch_cancel(bContext *C, wmOperator *op)
+{
+  if (op->customdata) {
+    clip_touch_exit((TouchData *)op->customdata);
+  }
+}
+void CLIP_OT_view_touch(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Touch Pan/Zoom";
+  ot->idname = "CLIP_OT_view_touch";
+  ot->description = "Use a touch device to pan/zoom the view";
+
+  /* api callbacks */
+  ot->poll = ED_space_clip_view_clip_poll;
+  ot->invoke = clip_touch_invoke;
+  ot->modal = clip_touch_modal;
+  ot->cancel = clip_touch_cancel;
+
+  /* operator is modal */
+  /* flags */
+  ot->flag = OPTYPE_LOCK_BYPASS;  // XXX from ndof
+}
 
 /********************** Prefetch operator *********************/
 

@@ -449,6 +449,7 @@ static void clip_operatortypes(void)
 #ifdef WITH_INPUT_NDOF
   WM_operatortype_append(CLIP_OT_view_ndof);
 #endif
+  WM_operatortype_append(CLIP_OT_view_touch);
   WM_operatortype_append(CLIP_OT_prefetch);
   WM_operatortype_append(CLIP_OT_set_scene_frames);
   WM_operatortype_append(CLIP_OT_cursor_set);

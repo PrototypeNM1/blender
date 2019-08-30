@@ -101,6 +101,7 @@ void CLIP_OT_mode_set(struct wmOperatorType *ot);
 #ifdef WITH_INPUT_NDOF
 void CLIP_OT_view_ndof(struct wmOperatorType *ot);
 #endif
+void CLIP_OT_view_touch(struct wmOperatorType *ot);
 
 void CLIP_OT_prefetch(struct wmOperatorType *ot);
 
