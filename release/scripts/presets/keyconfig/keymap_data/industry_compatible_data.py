@@ -950,6 +950,7 @@ def km_image(params):
         ("image.view_pan", {"type": 'TRACKPADPAN', "value": 'ANY'}, None),
         ("image.view_all", {"type": 'NDOF_BUTTON_FIT', "value": 'PRESS'}, None),
         ("image.view_ndof", {"type": 'NDOF_MOTION', "value": 'ANY'}, None),
+        ("image.view_touch", {"type": 'TOUCH', "value": 'PRESS'}, None),
         ("image.view_zoom_in", {"type": 'WHEELINMOUSE', "value": 'PRESS'}, None),
         ("image.view_zoom_out", {"type": 'WHEELOUTMOUSE', "value": 'PRESS'}, None),
         ("image.view_zoom_in", {"type": 'NUMPAD_PLUS', "value": 'PRESS'}, None),

@@ -215,6 +215,7 @@ static void image_operatortypes(void)
 #ifdef WITH_INPUT_NDOF
   WM_operatortype_append(IMAGE_OT_view_ndof);
 #endif
+  WM_operatortype_append(IMAGE_OT_view_touch);
 
   WM_operatortype_append(IMAGE_OT_new);
   WM_operatortype_append(IMAGE_OT_open);
