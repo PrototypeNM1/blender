@@ -69,6 +69,7 @@
 #include "ED_armature.h"
 #include "ED_particle.h"
 #include "ED_screen.h"
+#include "ED_touch.h"
 #include "ED_transform.h"
 #include "ED_mesh.h"
 #include "ED_view3d.h"
@@ -1601,6 +1602,150 @@ void VIEW3D_OT_ndof_all(struct wmOperatorType *ot)
 }
 
 #endif /* WITH_INPUT_NDOF */
+
+/** \} */
+
+/* -------------------------------------------------------------------- */
+/** \name Touch Operator
+ * \{ */
+
+typedef struct TouchData {
+  GHash *touchpoints;
+} TouchData;
+
+static int view3d_touch_exit(TouchData *td)
+{
+  BLI_ghash_free(td->touchpoints, NULL, MEM_freeN);
+  td->touchpoints = NULL;
+  MEM_freeN(td);
+}
+
+static int view3d_touch_invoke(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  TouchData *td;
+  Touch *touch;
+
+  wmTouchData *wmtd = (wmTouchData *)event->customdata;
+
+  if (event->val == KM_PRESS) {
+    td = MEM_callocN(sizeof(TouchData), "TouchData");
+    // WARNING: BLI_ghash_int_new uses BLI_ghashutil_intcmp for hash comparison, which treats the
+    // void* key as an int without indirection
+    td->touchpoints = BLI_ghash_int_new("touchpoints");
+    op->customdata = td;
+
+    touch = MEM_callocN(sizeof(Touch), "touch");
+    touch->id = wmtd->id;
+    touch->x = event->x;
+    touch->y = event->y;
+    BLI_ghash_insert(td->touchpoints, POINTER_FROM_INT(touch->id), (void *)touch);
+  }
+  else {
+    return OPERATOR_FINISHED;
+  }
+
+  /* add temp handler */
+  WM_event_add_modal_handler(C, op);
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static int view3d_touch_modal(bContext *C, wmOperator *op, const wmEvent *event)
+{
+  TouchData *td = op->customdata;
+  wmTouchData *wmtd = (wmTouchData *)event->customdata;
+
+  if (event->type != TOUCH) {
+    return OPERATOR_PASS_THROUGH;
+  }
+
+  switch (event->val) {
+    case KM_PRESS: {
+      if (!BLI_ghash_haskey(td->touchpoints, POINTER_FROM_INT(wmtd->id))) {
+        Touch *touch = MEM_callocN(sizeof(Touch), "touch");
+        touch->id = wmtd->id;
+        touch->x = event->x;
+        touch->y = event->y;
+        BLI_ghash_insert(td->touchpoints, POINTER_FROM_INT(touch->id), (void *)touch);
+      }
+      break;
+    }
+    case KM_CLICK_DRAG: {
+      Touch *touchlast = (Touch *)BLI_ghash_lookup(td->touchpoints, POINTER_FROM_INT(wmtd->id));
+      ARegion *ar = CTX_wm_region(C);
+
+      switch (BLI_ghash_len(td->touchpoints)) {
+        // Rotate the view for single touch
+        case 1: {
+          float offset[2] = {(touchlast->x - event->x), (touchlast->y - event->y)};
+
+          break;
+        }
+        // Pan, zoom, and roll the view for double touch
+        case 2: {
+          GHashIterator *it = BLI_ghashIterator_new(td->touchpoints);
+          for (it; !BLI_ghashIterator_done(it); BLI_ghashIterator_step(it)) {
+            if (POINTER_AS_INT(BLI_ghashIterator_getKey(it)) != wmtd->id) {
+              Touch *t2 = (Touch *)BLI_ghashIterator_getValue(it);
+              break;
+            }
+          }
+          BLI_ghashIterator_free(it);
+
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+
+      touchlast->x = event->x;
+      touchlast->y = event->y;
+
+      break;
+    }
+    case KM_RELEASE: {
+      BLI_ghash_remove(td->touchpoints, POINTER_FROM_INT(wmtd->id), NULL, MEM_freeN);
+
+      if (BLI_ghash_len(td->touchpoints) == 0) {
+        BLI_ghash_free(td->touchpoints, NULL, NULL);
+        td->touchpoints = NULL;
+        MEM_freeN(td);
+        return OPERATOR_FINISHED;
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+
+  return OPERATOR_RUNNING_MODAL;
+}
+
+static void view3d_touch_cancel(bContext *C, wmOperator *op)
+{
+  if (op->customdata) {
+    view3d_touch_exit((TouchData *)op->customdata);
+  }
+}
+
+void VIEW3D_OT_touch(wmOperatorType *ot)
+{
+  /* identifiers */
+  ot->name = "Touch Pan/Zoom/Rotate";
+  ot->idname = "VIEW3D_OT_touch";
+  ot->description = "Use a touch device to pan, zoom, and/or rotate the view";
+
+  /* api callbacks */
+  // ot->poll = ED_operator_region_view3d_active;
+  ot->invoke = view3d_touch_invoke;
+  ot->modal = view3d_touch_modal;
+  ot->cancel = view3d_touch_cancel;
+
+  /* flags */
+  ot->flag = 0;
+}
 
 /** \} */
 

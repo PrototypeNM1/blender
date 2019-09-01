@@ -66,6 +66,7 @@ void VIEW3D_OT_ndof_orbit_zoom(struct wmOperatorType *ot);
 void VIEW3D_OT_ndof_pan(struct wmOperatorType *ot);
 void VIEW3D_OT_ndof_all(struct wmOperatorType *ot);
 #endif /* WITH_INPUT_NDOF */
+void VIEW3D_OT_touch(struct wmOperatorType *ot);
 void VIEW3D_OT_view_all(struct wmOperatorType *ot);
 void VIEW3D_OT_view_axis(struct wmOperatorType *ot);
 void VIEW3D_OT_view_camera(struct wmOperatorType *ot);

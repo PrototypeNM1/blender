@@ -161,6 +161,7 @@ void view3d_operatortypes(void)
   WM_operatortype_append(VIEW3D_OT_ndof_pan);
   WM_operatortype_append(VIEW3D_OT_ndof_all);
 #endif /* WITH_INPUT_NDOF */
+  WM_operatortype_append(VIEW3D_OT_touch);
   WM_operatortype_append(VIEW3D_OT_view_all);
   WM_operatortype_append(VIEW3D_OT_view_axis);
   WM_operatortype_append(VIEW3D_OT_view_camera);
