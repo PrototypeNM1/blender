@@ -210,7 +210,6 @@ struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 pointerId;
   GHOST_TInt32 isInContact;
   GHOST_TInt32 isPrimary;
-  GHOST_TSuccess hasButtonMask;
   GHOST_TButtonMask buttonMask;
   POINT pixelLocation;
   GHOST_TabletData tabletData;

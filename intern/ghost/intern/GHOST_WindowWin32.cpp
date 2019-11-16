@@ -1032,7 +1032,6 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(GHOST_PointerInfoWin32 *pointer
     return GHOST_kFailure;
   }
 
-  pointerInfo->hasButtonMask = GHOST_kSuccess;
   switch (pointerApiInfo.ButtonChangeType) {
     case POINTER_CHANGE_FIRSTBUTTON_DOWN:
     case POINTER_CHANGE_FIRSTBUTTON_UP:
@@ -1055,7 +1054,6 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(GHOST_PointerInfoWin32 *pointer
       pointerInfo->buttonMask = GHOST_kButtonMaskButton5;
       break;
     default:
-      pointerInfo->hasButtonMask = GHOST_kFailure;
       break;
   }
 
