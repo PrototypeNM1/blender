@@ -82,8 +82,11 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
       m_normal_state(GHOST_kWindowStateNormal),
       m_user32(NULL),
       m_fpGetPointerInfo(NULL),
+      m_fpGetPointerInfoHistory(NULL),
       m_fpGetPointerPenInfo(NULL),
+      m_fpGetPointerPenInfoHistory(NULL),
       m_fpGetPointerTouchInfo(NULL),
+      m_fpGetPointerTouchInfoHistory(NULL),
       m_parentWindowHwnd(parentwindow ? parentwindow->m_hWnd : NULL),
       m_debug_context(is_debug)
 {
@@ -288,10 +291,16 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
   // Initialize Windows Ink
   if (m_user32) {
     m_fpGetPointerInfo = (GHOST_WIN32_GetPointerInfo)::GetProcAddress(m_user32, "GetPointerInfo");
+    m_fpGetPointerInfoHistory = (GHOST_WIN32_GetPointerInfoHistory)::GetProcAddress(
+        m_user32, "GetPointerInfoHistory");
     m_fpGetPointerPenInfo = (GHOST_WIN32_GetPointerPenInfo)::GetProcAddress(m_user32,
                                                                             "GetPointerPenInfo");
+    m_fpGetPointerPenInfoHistory = (GHOST_WIN32_GetPointerPenInfoHistory)::GetProcAddress(
+        m_user32, "GetPointerPenInfoHistory");
     m_fpGetPointerTouchInfo = (GHOST_WIN32_GetPointerTouchInfo)::GetProcAddress(
         m_user32, "GetPointerTouchInfo");
+    m_fpGetPointerTouchInfoHistory = (GHOST_WIN32_GetPointerTouchInfoHistory)::GetProcAddress(
+        m_user32, "GetPointerTouchInfoHistory");
   }
 
   // Initialize Wintab
@@ -381,6 +390,9 @@ GHOST_WindowWin32::~GHOST_WindowWin32()
     m_fpGetPointerInfo = NULL;
     m_fpGetPointerPenInfo = NULL;
     m_fpGetPointerTouchInfo = NULL;
+    m_fpGetPointerInfoHistory = NULL;
+    m_fpGetPointerPenInfoHistory = NULL;
+    m_fpGetPointerTouchInfoHistory = NULL;
   }
 
   if (m_customCursor) {
