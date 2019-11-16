@@ -193,8 +193,18 @@ typedef struct tagPOINTER_TOUCH_INFO {
   IS_POINTER_FLAG_SET_WPARAM(wParam, POINTER_MESSAGE_FLAG_CANCELED)
 
 typedef BOOL(API *GHOST_WIN32_GetPointerInfo)(UINT32 pointerId, POINTER_INFO *pointerInfo);
+typedef BOOL(API *GHOST_WIN32_GetPointerInfoHistory)(UINT32 pointerId,
+                                                     UINT32 *entriesCount,
+                                                     POINTER_INFO *pointerInfo);
 typedef BOOL(API *GHOST_WIN32_GetPointerPenInfo)(UINT32 pointerId, POINTER_PEN_INFO *penInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfo)(UINT32 pointerId, POINTER_TOUCH_INFO *penInfo);
+typedef BOOL(API *GHOST_WIN32_GetPointerPenInfoHistory)(UINT32 pointerId,
+                                                        UINT32 *entriesCount,
+                                                        POINTER_PEN_INFO *penInfo);
+typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfo)(UINT32 pointerId,
+                                                   POINTER_TOUCH_INFO *touchInfo);
+typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfoHistory)(UINT32 pointerId,
+                                                          UINT32 *entriesCount,
+                                                          POINTER_TOUCH_INFO *touchInfo);
 
 struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 pointerId;
@@ -528,8 +538,11 @@ class GHOST_WindowWin32 : public GHOST_Window {
   /** user32 dll handle*/
   HMODULE m_user32;
   GHOST_WIN32_GetPointerInfo m_fpGetPointerInfo;
+  GHOST_WIN32_GetPointerInfoHistory m_fpGetPointerInfoHistory;
   GHOST_WIN32_GetPointerPenInfo m_fpGetPointerPenInfo;
+  GHOST_WIN32_GetPointerPenInfoHistory m_fpGetPointerPenInfoHistory;
   GHOST_WIN32_GetPointerTouchInfo m_fpGetPointerTouchInfo;
+  GHOST_WIN32_GetPointerTouchInfoHistory m_fpGetPointerTouchInfoHistory;
 
   HWND m_parentWindowHwnd;
 
