@@ -39,6 +39,7 @@
 #define PACKETDATA (PK_BUTTONS | PK_NORMAL_PRESSURE | PK_ORIENTATION | PK_CURSOR)
 #define PACKETMODE PK_BUTTONS
 #include <pktdef.h>
+#include <memory>
 
 class GHOST_SystemWin32;
 class GHOST_DropTargetWin32;
@@ -87,6 +88,26 @@ typedef enum tagPOINTER_BUTTON_CHANGE_TYPE {
 
 typedef DWORD POINTER_INPUT_TYPE;
 typedef UINT32 POINTER_FLAGS;
+
+#define POINTER_FLAG_NONE 0x00000000
+#define POINTER_FLAG_NEW 0x00000001
+#define POINTER_FLAG_INRANGE 0x00000002
+#define POINTER_FLAG_INCONTACT 0x00000004
+#define POINTER_FLAG_FIRSTBUTTON 0x00000010
+#define POINTER_FLAG_SECONDBUTTON 0x00000020
+#define POINTER_FLAG_THIRDBUTTON 0x00000040
+#define POINTER_FLAG_FOURTHBUTTON 0x00000080
+#define POINTER_FLAG_FIFTHBUTTON 0x00000100
+#define POINTER_FLAG_PRIMARY 0x00002000
+#define POINTER_FLAG_CONFIDENCE 0x000004000
+#define POINTER_FLAG_CANCELED 0x000008000
+#define POINTER_FLAG_DOWN 0x00010000
+#define POINTER_FLAG_UPDATE 0x00020000
+#define POINTER_FLAG_UP 0x00040000
+#define POINTER_FLAG_WHEEL 0x00080000
+#define POINTER_FLAG_HWHEEL 0x00100000
+#define POINTER_FLAG_CAPTURECHANGED 0x00200000
+#define POINTER_FLAG_HASTRANSFORM 0x00400000
 
 typedef struct tagPOINTER_INFO {
   POINTER_INPUT_TYPE pointerType;
@@ -192,17 +213,13 @@ typedef struct tagPOINTER_TOUCH_INFO {
 #define IS_POINTER_CANCELED_WPARAM(wParam) \
   IS_POINTER_FLAG_SET_WPARAM(wParam, POINTER_MESSAGE_FLAG_CANCELED)
 
-typedef BOOL(API *GHOST_WIN32_GetPointerInfo)(UINT32 pointerId, POINTER_INFO *pointerInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerInfoHistory)(UINT32 pointerId,
+typedef BOOL(WINAPI *GHOST_WIN32_GetPointerInfoHistory)(UINT32 pointerId,
                                                      UINT32 *entriesCount,
                                                      POINTER_INFO *pointerInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerPenInfo)(UINT32 pointerId, POINTER_PEN_INFO *penInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerPenInfoHistory)(UINT32 pointerId,
+typedef BOOL(WINAPI *GHOST_WIN32_GetPointerPenInfoHistory)(UINT32 pointerId,
                                                         UINT32 *entriesCount,
                                                         POINTER_PEN_INFO *penInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfo)(UINT32 pointerId,
-                                                   POINTER_TOUCH_INFO *touchInfo);
-typedef BOOL(API *GHOST_WIN32_GetPointerTouchInfoHistory)(UINT32 pointerId,
+typedef BOOL(WINAPI *GHOST_WIN32_GetPointerTouchInfoHistory)(UINT32 pointerId,
                                                           UINT32 *entriesCount,
                                                           POINTER_TOUCH_INFO *touchInfo);
 
@@ -408,9 +425,11 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   void setTabletData(GHOST_TabletData *tabletData);
   bool useTabletAPI(GHOST_TTabletAPI api) const;
-  void getPointerInfo(WPARAM wParam);
+  GHOST_TSuccess getPointerInfo(std::unique_ptr<GHOST_PointerInfoWin32[]> &outPointerInfo,
+                                GHOST_TUns32 &outCount,
+                                WPARAM wParam,
+                                LPARAM lParam);
 
-  void processWin32PointerEvent(WPARAM wParam);
   void processWin32TabletActivateEvent(WORD state);
   void processWin32TabletInitEvent();
   void processWin32TabletEvent(WPARAM wParam, LPARAM lParam);
@@ -427,8 +446,6 @@ class GHOST_WindowWin32 : public GHOST_Window {
   }
 
   GHOST_TUns16 getDPIHint() override;
-
-  GHOST_TSuccess getPointerInfo(GHOST_PointerInfoWin32 *pointerInfo, WPARAM wParam, LPARAM lParam);
 
   /** if the window currently resizing */
   bool m_inLiveResize;
@@ -536,11 +553,8 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   /** user32 dll handle*/
   HMODULE m_user32;
-  GHOST_WIN32_GetPointerInfo m_fpGetPointerInfo;
   GHOST_WIN32_GetPointerInfoHistory m_fpGetPointerInfoHistory;
-  GHOST_WIN32_GetPointerPenInfo m_fpGetPointerPenInfo;
   GHOST_WIN32_GetPointerPenInfoHistory m_fpGetPointerPenInfoHistory;
-  GHOST_WIN32_GetPointerTouchInfo m_fpGetPointerTouchInfo;
   GHOST_WIN32_GetPointerTouchInfoHistory m_fpGetPointerTouchInfoHistory;
 
   HWND m_parentWindowHwnd;
