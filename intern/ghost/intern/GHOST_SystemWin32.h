@@ -271,11 +271,13 @@ class GHOST_SystemWin32 : public GHOST_System {
    * \param type      The type of event to create.
    * \param window    The window receiving the event (the active window).
    * \param mask      The button mask of this event.
+   * \param td        The tablet data of this event.
    * \return The event created.
    */
   static GHOST_EventButton *processButtonEvent(GHOST_TEventType type,
                                                GHOST_WindowWin32 *window,
-                                               GHOST_TButtonMask mask);
+                                               GHOST_TButtonMask mask,
+                                               GHOST_TabletData *td);
 
   /**
    * Creates pointer event.
@@ -284,13 +286,12 @@ class GHOST_SystemWin32 : public GHOST_System {
    * \param wParam    The wParam from the wndproc
    * \param lParam    The lParam from the wndproc
    * \param eventhandled true if the method handled the event
-   * \return The event created.
    */
-  static GHOST_Event *processPointerEvent(GHOST_TEventType type,
-                                          GHOST_WindowWin32 *window,
-                                          WPARAM wParam,
-                                          LPARAM lParam,
-                                          bool &eventhandled);
+  static void processPointerEvents(GHOST_TEventType type,
+                                   GHOST_WindowWin32 *window,
+                                   WPARAM wParam,
+                                   LPARAM lParam,
+                                   bool &eventhandled);
 
   /**
    * Creates cursor event.
