@@ -39,7 +39,6 @@
 #define PACKETDATA (PK_BUTTONS | PK_NORMAL_PRESSURE | PK_ORIENTATION | PK_CURSOR)
 #define PACKETMODE PK_BUTTONS
 #include <pktdef.h>
-#include <memory>
 
 class GHOST_SystemWin32;
 class GHOST_DropTargetWin32;
@@ -426,7 +425,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   void setTabletData(GHOST_TabletData *tabletData);
   bool useTabletAPI(GHOST_TTabletAPI api) const;
-  GHOST_TSuccess getPointerInfo(std::unique_ptr<GHOST_PointerInfoWin32[]> &outPointerInfo,
+  GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
                                 GHOST_TUns32 &outCount,
                                 WPARAM wParam,
                                 LPARAM lParam);

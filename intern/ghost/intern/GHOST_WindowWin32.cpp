@@ -1005,7 +1005,7 @@ GHOST_TSuccess GHOST_WindowWin32::hasCursorShape(GHOST_TStandardCursor cursorSha
 }
 
 GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
-    std::unique_ptr<GHOST_PointerInfoWin32[]> &outPointerInfo,
+    std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
     GHOST_TUns32 &outCount,
     WPARAM wParam,
     LPARAM lParam)
@@ -1018,11 +1018,11 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
     return GHOST_kFailure;
   }
 
-  auto pointerPenInfo = std::unique_ptr<POINTER_PEN_INFO[]>{new POINTER_PEN_INFO[outCount]};
-  outPointerInfo = std::unique_ptr<GHOST_PointerInfoWin32[]>{new GHOST_PointerInfoWin32[outCount]};
+  auto pointerPenInfo = std::vector<POINTER_PEN_INFO>(outCount);
+  outPointerInfo.resize(outCount);
 
   if (!(m_fpGetPointerPenInfoHistory &&
-        m_fpGetPointerPenInfoHistory(pointerId, &outCount, pointerPenInfo.get()))) {
+        m_fpGetPointerPenInfoHistory(pointerId, &outCount, pointerPenInfo.data()))) {
     return GHOST_kFailure;
   }
 
