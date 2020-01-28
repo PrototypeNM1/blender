@@ -926,7 +926,7 @@ void GHOST_SystemWin32::processPointerEvents(GHOST_TEventType type,
                                              LPARAM lParam,
                                              bool &eventHandled)
 {
-  std::unique_ptr<GHOST_PointerInfoWin32[]> pointerInfo = NULL;
+  std::vector<GHOST_PointerInfoWin32> pointerInfo;
   GHOST_TUns32 count;
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
