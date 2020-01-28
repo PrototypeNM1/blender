@@ -1026,6 +1026,7 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
 {
   GHOST_TInt32 pointerId = GET_POINTERID_WPARAM(wParam);
   GHOST_TInt32 isPrimary = IS_POINTER_PRIMARY_WPARAM(wParam);
+  GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
 
   if (!(m_fpGetPointerInfoHistory && m_fpGetPointerInfoHistory(pointerId, &outCount, NULL))) {
     return GHOST_kFailure;
@@ -1076,6 +1077,7 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
     outPointerInfo[i].tabletData.Xtilt = 0.0f;
     outPointerInfo[i].tabletData.Ytilt = 0.0f;
     outPointerInfo[i].isInContact = pointerApiInfo.pointerFlags & POINTER_FLAG_INCONTACT;
+    outPointerInfo[i].time = system->performanceCounterToMillis(pointerApiInfo.PerformanceCount);
 
     if (pointerPenInfo[i].penMask & PEN_MASK_PRESSURE) {
       outPointerInfo[i].tabletData.Pressure = pointerPenInfo[i].pressure / 1024.0f;

@@ -223,6 +223,15 @@ GHOST_SystemWin32::~GHOST_SystemWin32()
   toggleConsole(1);
 }
 
+GHOST_TUns64 GHOST_SystemWin32::performanceCounterToMillis(__int64 count) const
+{
+  // Calculate the time passed since system initialization.
+  __int64 delta = 1000 * (count - m_start);
+
+  GHOST_TUns64 t = (GHOST_TUns64)(delta / m_freq);
+  return t;
+}
+
 GHOST_TUns64 GHOST_SystemWin32::getMilliSeconds() const
 {
   // Hardware does not support high resolution timers. We will use GetTickCount instead then.
@@ -234,11 +243,7 @@ GHOST_TUns64 GHOST_SystemWin32::getMilliSeconds() const
   __int64 count = 0;
   ::QueryPerformanceCounter((LARGE_INTEGER *)&count);
 
-  // Calculate the time passed since system initialization.
-  __int64 delta = 1000 * (count - m_start);
-
-  GHOST_TUns64 t = (GHOST_TUns64)(delta / m_freq);
-  return t;
+  return performanceCounterToMillis(count);
 }
 
 GHOST_TUns8 GHOST_SystemWin32::getNumDisplays() const
@@ -938,44 +943,45 @@ void GHOST_SystemWin32::processPointerEvents(GHOST_TEventType type,
     return;  // For multi-touch displays we ignore these events
   }
 
-  // Coalesced pointer events are reverse chronological order, reorder chronologically
-  for (GHOST_TUns32 i = count; i-- > 0;) {
-    switch (type) {
-      case GHOST_kEventButtonDown:
+  switch (type) {
+    case GHOST_kEventButtonDown:
+      if (pointerInfo[0].isInContact) {
+        window->setTabletData(&pointerInfo[0].tabletData);
+      }
+      eventHandled = true;
+      system->pushEvent(new GHOST_EventButton(pointerInfo[0].time,
+                                              GHOST_kEventButtonDown,
+                                              window,
+                                              pointerInfo[0].buttonMask,
+                                              &pointerInfo[0].tabletData));
+      break;
+    case GHOST_kEventButtonUp:
+      window->setTabletData(NULL);
+      eventHandled = true;
+      system->pushEvent(new GHOST_EventButton(pointerInfo[0].time,
+                                              GHOST_kEventButtonUp,
+                                              window,
+                                              pointerInfo[0].buttonMask,
+                                              &pointerInfo[0].tabletData));
+      break;
+    case GHOST_kEventCursorMove:
+      // Coalesced pointer events are reverse chronological order, reorder chronologically.
+      // Only contiguous move events are coalesced.
+      for (GHOST_TUns32 i = count; i-- > 0;) {
         if (pointerInfo[i].isInContact) {
           window->setTabletData(&pointerInfo[i].tabletData);
         }
         eventHandled = true;
-        system->pushEvent(new GHOST_EventButton(system->getMilliSeconds(),
-                                                GHOST_kEventButtonDown,
-                                                window,
-                                                pointerInfo[i].buttonMask,
-                                                &pointerInfo[i].tabletData));
-        break;
-      case GHOST_kEventButtonUp:
-        window->setTabletData(NULL);
-        eventHandled = true;
-        system->pushEvent(new GHOST_EventButton(system->getMilliSeconds(),
-                                                GHOST_kEventButtonUp,
-                                                window,
-                                                pointerInfo[i].buttonMask,
-                                                &pointerInfo[i].tabletData));
-        break;
-      case GHOST_kEventCursorMove:
-        if (pointerInfo[i].isInContact) {
-          window->setTabletData(&pointerInfo[i].tabletData);
-        }
-        eventHandled = true;
-        system->pushEvent(new GHOST_EventCursor(system->getMilliSeconds(),
+        system->pushEvent(new GHOST_EventCursor(pointerInfo[i].time,
                                                 GHOST_kEventCursorMove,
                                                 window,
                                                 pointerInfo[i].pixelLocation.x,
                                                 pointerInfo[i].pixelLocation.y,
                                                 &pointerInfo[i].tabletData));
-        break;
-      default:
-        break;
-    }
+      }
+      break;
+    default:
+      break;
   }
 
   system->setCursorPosition(pointerInfo[0].pixelLocation.x, pointerInfo[0].pixelLocation.y);
