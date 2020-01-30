@@ -1087,11 +1087,11 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
       outPointerInfo[i].tabletData.Active = GHOST_kTabletModeEraser;
     }
 
-    if (pointerPenInfo[i].penFlags & PEN_MASK_TILT_X) {
+    if (pointerPenInfo[i].penMask & PEN_MASK_TILT_X) {
       outPointerInfo[i].tabletData.Xtilt = fmin(fabs(pointerPenInfo[i].tiltX / 90.0f), 1.0f);
     }
 
-    if (pointerPenInfo[i].penFlags & PEN_MASK_TILT_Y) {
+    if (pointerPenInfo[i].penMask & PEN_MASK_TILT_Y) {
       outPointerInfo[i].tabletData.Ytilt = fmin(fabs(pointerPenInfo[i].tiltY / 90.0f), 1.0f);
     }
   }
