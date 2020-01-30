@@ -115,12 +115,22 @@
 #  define WM_DPICHANGED 0x02E0
 #endif  // WM_DPICHANGED
 
+// WM_POINTER API messages minimum Windows 7
+#ifndef WM_POINTERENTER
+#  define WM_POINTERENTER 0x0249
+#endif  // WM_POINTERENTER
+#ifndef WM_POINTERDOWN
+#  define WM_POINTERDOWN 0x0246
+#endif  // WM_POINTERDOWN
 #ifndef WM_POINTERUPDATE
 #  define WM_POINTERUPDATE 0x0245
 #endif  // WM_POINTERUPDATE
-
-#define WM_POINTERDOWN 0x0246
-#define WM_POINTERUP 0x0247
+#ifndef WM_POINTERUP
+#  define WM_POINTERUP 0x0247
+#endif  // WM_POINTERUP
+#ifndef WM_POINTERLEAVE
+#  define WM_POINTERLEAVE 0x024A
+#endif  // WM_POINTERLEAVE
 
 /* Workaround for some laptop touchpads, some of which seems to
  * have driver issues which makes it so window function receives
