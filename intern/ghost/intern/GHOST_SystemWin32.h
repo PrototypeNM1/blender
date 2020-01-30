@@ -302,13 +302,13 @@ class GHOST_SystemWin32 : public GHOST_System {
 
   /**
    * Creates pointer event.
-   * \param type      The type of event to create.
+   * \param type      The type of pointer event
    * \param window    The window receiving the event (the active window).
    * \param wParam    The wParam from the wndproc
    * \param lParam    The lParam from the wndproc
    * \param eventhandled true if the method handled the event
    */
-  static void processPointerEvents(GHOST_TEventType type,
+  static void processPointerEvents(UINT type,
                                    GHOST_WindowWin32 *window,
                                    WPARAM wParam,
                                    LPARAM lParam,
