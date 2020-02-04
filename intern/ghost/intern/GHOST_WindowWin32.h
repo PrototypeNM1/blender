@@ -426,7 +426,6 @@ class GHOST_WindowWin32 : public GHOST_Window {
   void setTabletData(GHOST_TabletData *tabletData);
   bool useTabletAPI(GHOST_TTabletAPI api) const;
   GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
-                                GHOST_TUns32 &outCount,
                                 WPARAM wParam,
                                 LPARAM lParam);
 

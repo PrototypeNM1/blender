@@ -1020,13 +1020,13 @@ GHOST_TSuccess GHOST_WindowWin32::hasCursorShape(GHOST_TStandardCursor cursorSha
 
 GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
     std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
-    GHOST_TUns32 &outCount,
     WPARAM wParam,
     LPARAM lParam)
 {
   GHOST_TInt32 pointerId = GET_POINTERID_WPARAM(wParam);
   GHOST_TInt32 isPrimary = IS_POINTER_PRIMARY_WPARAM(wParam);
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
+  GHOST_TUns32 outCount;
 
   if (!(m_fpGetPointerInfoHistory && m_fpGetPointerInfoHistory(pointerId, &outCount, NULL))) {
     return GHOST_kFailure;
