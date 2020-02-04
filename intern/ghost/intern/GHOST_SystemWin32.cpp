@@ -892,14 +892,13 @@ void GHOST_SystemWin32::processPointerEvents(
     UINT type, GHOST_WindowWin32 *window, WPARAM wParam, LPARAM lParam, bool &eventHandled)
 {
   std::vector<GHOST_PointerInfoWin32> pointerInfo;
-  GHOST_TUns32 count;
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
   if (!window->useTabletAPI(GHOST_kTabletNative)) {
     return;
   }
 
-  if (window->getPointerInfo(pointerInfo, count, wParam, lParam) != GHOST_kSuccess) {
+  if (window->getPointerInfo(pointerInfo, wParam, lParam) != GHOST_kSuccess) {
     return;
   }
 
@@ -933,7 +932,7 @@ void GHOST_SystemWin32::processPointerEvents(
       // Coalesced pointer events are reverse chronological order, reorder chronologically.
       // Only contiguous move events are coalesced.
       window->setTabletData(&pointerInfo[0].tabletData);
-      for (GHOST_TUns32 i = count; i-- > 0;) {
+      for (GHOST_TUns32 i = pointerInfo.size(); i-- > 0;) {
         system->pushEvent(new GHOST_EventCursor(pointerInfo[i].time,
                                                 GHOST_kEventCursorMove,
                                                 window,
