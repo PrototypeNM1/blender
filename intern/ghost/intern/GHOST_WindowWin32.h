@@ -418,6 +418,21 @@ class GHOST_WindowWin32 : public GHOST_Window {
   HCURSOR getStandardCursor(GHOST_TStandardCursor shape) const;
   void loadCursor(bool visible, GHOST_TStandardCursor cursorShape) const;
 
+  /**
+   * Handle setup and switch between Wintab and Pointer APIs
+   */
+  void initializeTabletApi();
+
+  /**
+   * Wintab setup
+   */
+  void initializeWintab();
+
+  /**
+   * Wintab teardown
+   */
+  void destructWintab();
+
   const GHOST_TabletData &GetTabletData()
   {
     return m_tabletData;

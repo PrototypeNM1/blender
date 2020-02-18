@@ -1192,6 +1192,16 @@ GHOST_TSuccess GHOST_SystemWin32::pushDragDropEvent(GHOST_TEventType eventType,
       system->getMilliSeconds(), eventType, draggedObjectType, window, mouseX, mouseY, data));
 }
 
+void GHOST_SystemWin32::setTabletAPI(GHOST_TTabletAPI api)
+{
+  m_tabletAPI = api;
+
+  for (GHOST_IWindow *iter_win : getWindowManager()->getWindows()) {
+    GHOST_WindowWin32 *iter_win32win = (GHOST_WindowWin32 *)iter_win;
+    iter_win32win->initializeTabletApi();
+  }
+}
+
 void GHOST_SystemWin32::processMinMaxInfo(MINMAXINFO *minmax)
 {
   minmax->ptMinTrackSize.x = 320;
