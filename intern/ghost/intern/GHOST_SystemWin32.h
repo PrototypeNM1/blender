@@ -318,11 +318,8 @@ class GHOST_SystemWin32 : public GHOST_System {
    * \param lParam    The lParam from the wndproc
    * \param eventhandled true if the method handled the event
    */
-  static void processPointerEvents(UINT type,
-                                   GHOST_WindowWin32 *window,
-                                   WPARAM wParam,
-                                   LPARAM lParam,
-                                   bool &eventhandled);
+  static void processPointerEvents(
+      UINT type, GHOST_WindowWin32 *window, WPARAM wParam, LPARAM lParam, bool &eventhandled);
 
   /**
    * Creates cursor event.

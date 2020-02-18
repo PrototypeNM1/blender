@@ -1049,9 +1049,7 @@ void GHOST_WindowWin32::destructWintab()
 }
 
 GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
-    std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
-    WPARAM wParam,
-    LPARAM lParam)
+    std::vector<GHOST_PointerInfoWin32> &outPointerInfo, WPARAM wParam, LPARAM lParam)
 {
   GHOST_TInt32 pointerId = GET_POINTERID_WPARAM(wParam);
   GHOST_TInt32 isPrimary = IS_POINTER_PRIMARY_WPARAM(wParam);

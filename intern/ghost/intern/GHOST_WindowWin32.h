@@ -213,14 +213,14 @@ typedef struct tagPOINTER_TOUCH_INFO {
   IS_POINTER_FLAG_SET_WPARAM(wParam, POINTER_MESSAGE_FLAG_CANCELED)
 
 typedef BOOL(WINAPI *GHOST_WIN32_GetPointerInfoHistory)(UINT32 pointerId,
-                                                     UINT32 *entriesCount,
-                                                     POINTER_INFO *pointerInfo);
-typedef BOOL(WINAPI *GHOST_WIN32_GetPointerPenInfoHistory)(UINT32 pointerId,
                                                         UINT32 *entriesCount,
-                                                        POINTER_PEN_INFO *penInfo);
+                                                        POINTER_INFO *pointerInfo);
+typedef BOOL(WINAPI *GHOST_WIN32_GetPointerPenInfoHistory)(UINT32 pointerId,
+                                                           UINT32 *entriesCount,
+                                                           POINTER_PEN_INFO *penInfo);
 typedef BOOL(WINAPI *GHOST_WIN32_GetPointerTouchInfoHistory)(UINT32 pointerId,
-                                                          UINT32 *entriesCount,
-                                                          POINTER_TOUCH_INFO *touchInfo);
+                                                             UINT32 *entriesCount,
+                                                             POINTER_TOUCH_INFO *touchInfo);
 
 struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 pointerId;
