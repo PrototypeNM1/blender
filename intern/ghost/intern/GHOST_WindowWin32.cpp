@@ -1143,12 +1143,9 @@ void GHOST_WindowWin32::processWin32TabletActivateEvent(WORD state)
     return;
   }
 
-  if (m_wintab.enable && m_wintab.tablet) {
+  if (m_wintab.enable && m_wintab.overlap && m_wintab.tablet) {
     m_wintab.enable(m_wintab.tablet, state);
-
-    if (m_wintab.overlap && state) {
-      m_wintab.overlap(m_wintab.tablet, TRUE);
-    }
+    m_wintab.overlap(m_wintab.tablet, state);
   }
 }
 
