@@ -1442,7 +1442,6 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
         case WT_PACKET:
           window->processWin32TabletEvent(wParam, lParam);
           break;
-        case WT_CSRCHANGE:
         case WT_PROXIMITY:
           window->processWin32TabletInitEvent();
           break;
