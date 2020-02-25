@@ -741,21 +741,20 @@ bool GHOST_WindowWin32::isDialog() const
   return (parent != 0) && (style & WS_POPUPWINDOW);
 }
 
-void GHOST_WindowWin32::registerMouseClickEvent(int press)
+void GHOST_WindowWin32::updateMouseCapture(GHOST_MouseCaptureEventWin32 event)
 {
-
-  switch (press) {
-    case 0:
+  switch (event) {
+    case MousePressed:
       m_nPressedButtons++;
       break;
-    case 1:
+    case MouseReleased:
       if (m_nPressedButtons)
         m_nPressedButtons--;
       break;
-    case 2:
+    case OperatorGrab:
       m_hasGrabMouse = true;
       break;
-    case 3:
+    case OperatorUngrab:
       m_hasGrabMouse = false;
       break;
   }
@@ -933,7 +932,7 @@ GHOST_TSuccess GHOST_WindowWin32::setWindowCursorGrab(GHOST_TGrabCursorMode mode
       if (mode == GHOST_kGrabHide)
         setWindowCursorVisibility(false);
     }
-    registerMouseClickEvent(2);
+    updateMouseCapture(OperatorGrab);
   }
   else {
     if (m_cursorGrab == GHOST_kGrabHide) {
@@ -953,7 +952,7 @@ GHOST_TSuccess GHOST_WindowWin32::setWindowCursorGrab(GHOST_TGrabCursorMode mode
      * can be incorrect on exit. */
     setCursorGrabAccum(0, 0);
     m_cursorGrabBounds.m_l = m_cursorGrabBounds.m_r = -1; /* disable */
-    registerMouseClickEvent(3);
+    updateMouseCapture(OperatorUngrab);
   }
 
   return GHOST_kSuccess;

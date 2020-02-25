@@ -968,7 +968,7 @@ void GHOST_SystemWin32::processPointerEvents(
                                               window,
                                               pointerInfo[0].buttonMask,
                                               &pointerInfo[0].tabletData));
-      window->registerMouseClickEvent(0);
+      window->updateMouseCapture(MousePressed);
       break;
     case WM_POINTERUPDATE:
       // Coalesced pointer events are reverse chronological order, reorder chronologically.
@@ -990,7 +990,7 @@ void GHOST_SystemWin32::processPointerEvents(
                                               window,
                                               pointerInfo[0].buttonMask,
                                               &pointerInfo[0].tabletData));
-      window->registerMouseClickEvent(1);
+      window->updateMouseCapture(MouseReleased);
       break;
     case WM_POINTERLEAVE:
       // Unset the window's tablet data to signal that normal mouse handling can continue.
@@ -1459,19 +1459,19 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
         // Mouse events, processed
         ////////////////////////////////////////////////////////////////////////
         case WM_LBUTTONDOWN:
-          window->registerMouseClickEvent(0);
+          window->updateMouseCapture(MousePressed);
           event = processButtonEvent(GHOST_kEventButtonDown, window, GHOST_kButtonMaskLeft);
           break;
         case WM_MBUTTONDOWN:
-          window->registerMouseClickEvent(0);
+          window->updateMouseCapture(MousePressed);
           event = processButtonEvent(GHOST_kEventButtonDown, window, GHOST_kButtonMaskMiddle);
           break;
         case WM_RBUTTONDOWN:
-          window->registerMouseClickEvent(0);
+          window->updateMouseCapture(MousePressed);
           event = processButtonEvent(GHOST_kEventButtonDown, window, GHOST_kButtonMaskRight);
           break;
         case WM_XBUTTONDOWN:
-          window->registerMouseClickEvent(0);
+          window->updateMouseCapture(MousePressed);
           if ((short)HIWORD(wParam) == XBUTTON1) {
             event = processButtonEvent(GHOST_kEventButtonDown, window, GHOST_kButtonMaskButton4);
           }
@@ -1480,19 +1480,19 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
           }
           break;
         case WM_LBUTTONUP:
-          window->registerMouseClickEvent(1);
+          window->updateMouseCapture(MouseReleased);
           event = processButtonEvent(GHOST_kEventButtonUp, window, GHOST_kButtonMaskLeft);
           break;
         case WM_MBUTTONUP:
-          window->registerMouseClickEvent(1);
+          window->updateMouseCapture(MouseReleased);
           event = processButtonEvent(GHOST_kEventButtonUp, window, GHOST_kButtonMaskMiddle);
           break;
         case WM_RBUTTONUP:
-          window->registerMouseClickEvent(1);
+          window->updateMouseCapture(MouseReleased);
           event = processButtonEvent(GHOST_kEventButtonUp, window, GHOST_kButtonMaskRight);
           break;
         case WM_XBUTTONUP:
-          window->registerMouseClickEvent(1);
+          window->updateMouseCapture(MouseReleased);
           if ((short)HIWORD(wParam) == XBUTTON1) {
             event = processButtonEvent(GHOST_kEventButtonUp, window, GHOST_kButtonMaskButton4);
           }
