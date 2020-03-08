@@ -1216,8 +1216,7 @@ GHOST_TSuccess GHOST_WindowWin32::wintabMouseToGhost(UINT cursor,
   }
 }
 
-GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo,
-                                                GHOST_TEventType type)
+GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo)
 {
   if (!useTabletAPI(GHOST_kTabletWintab)) {
     return GHOST_kFailure;

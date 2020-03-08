@@ -315,7 +315,7 @@ class GHOST_SystemWin32 : public GHOST_System {
                                                GHOST_WindowWin32 *window,
                                                GHOST_TButtonMask mask);
 
-  static void processWintabEvents(GHOST_WindowWin32 *window, GHOST_TEventType type);
+  static void processWintabEvents(GHOST_WindowWin32 *window);
 
   /**
    * Creates pointer event.

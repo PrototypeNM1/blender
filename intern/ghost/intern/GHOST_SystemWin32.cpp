@@ -943,7 +943,7 @@ GHOST_EventButton *GHOST_SystemWin32::processButtonEvent(GHOST_TEventType type,
 
   if (system->m_tabletInRange) {
     if (window->useTabletAPI(GHOST_kTabletWintab)) {
-      processWintabEvents(window, type);
+      processWintabEvents(window);
     }
 
     // Tablet events already queued
@@ -952,12 +952,12 @@ GHOST_EventButton *GHOST_SystemWin32::processButtonEvent(GHOST_TEventType type,
   return new GHOST_EventButton(system->getMilliSeconds(), type, window, mask);
 }
 
-void GHOST_SystemWin32::processWintabEvents(GHOST_WindowWin32 *window, GHOST_TEventType type)
+void GHOST_SystemWin32::processWintabEvents(GHOST_WindowWin32 *window)
 {
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
   std::vector<GHOST_WintabInfoWin32> wintabInfo;
-  if (!window->getWintabInfo(wintabInfo, type)) {
+  if (!window->getWintabInfo(wintabInfo)) {
     return;
   }
 
@@ -971,8 +971,19 @@ void GHOST_SystemWin32::processWintabEvents(GHOST_WindowWin32 *window, GHOST_TEv
         // Move cursor to point of contact because GHOST_EventButton does not include position.
         system->pushEvent(new GHOST_EventCursor(
             info.time, GHOST_kEventCursorMove, window, info.x, info.y, &info.tabletData));
-        system->pushEvent(
-            new GHOST_EventButton(info.time, info.type, window, info.button, &info.tabletData));
+
+        // If no mouse button has been pressed, then a driver specific button map is blocking
+        // normal mouse emulation and we should do the same. This can happen when an errant
+        // WM_*BUTTONUP event fires due to Wintab mouse emulation when it shouldn't, while a
+        // previously queued Wintab button down event mapped to a mouse button remains in the
+        // queue.
+        //
+        // The described behavior was observed to occur with Wacom's Bamboo CTE-450 when pressing
+        // touch the stylus to the pad twice while a button mapped to scroll was pressed.
+        if (window->getMousePressed()) {
+          system->pushEvent(
+              new GHOST_EventButton(info.time, info.type, window, info.button, &info.tabletData));
+        }
         break;
       }
       case GHOST_kEventButtonUp:
@@ -1081,7 +1092,7 @@ GHOST_EventCursor *GHOST_SystemWin32::processCursorEvent(GHOST_TEventType type,
       // system event (scroll, etc.) and thus it is not possible to determine if a mouse click
       // event should occur.
       if (window->getMousePressed()) {
-        processWintabEvents(window, type);
+        processWintabEvents(window);
         return NULL;
       }
       // ... else do normal mouse cursor handling for wintab until pressed.

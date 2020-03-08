@@ -454,8 +454,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
   void processWintabActivateEvent(bool active);
   void processWintabProximityEvent(bool inRange);
   GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
-  GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo,
-                               GHOST_TEventType type);
+  GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);
 
   GHOST_TSuccess beginFullScreen() const
   {
