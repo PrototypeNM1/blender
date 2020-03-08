@@ -1759,6 +1759,13 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
                          SWP_NOZORDER | SWP_NOACTIVATE);
           }
           break;
+        case WM_DISPLAYCHANGE:
+          for (GHOST_IWindow *iter_win : system->getWindowManager()->getWindows()) {
+            GHOST_WindowWin32 *iter_win32win = (GHOST_WindowWin32 *)iter_win;
+            iter_win32win->destructWintab();
+            iter_win32win->initializeTabletApi();
+          }
+          break;
         ////////////////////////////////////////////////////////////////////////
         // Window events, ignored
         ////////////////////////////////////////////////////////////////////////
