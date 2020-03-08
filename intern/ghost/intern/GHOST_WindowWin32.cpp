@@ -1054,6 +1054,10 @@ void GHOST_WindowWin32::destructWintab()
 GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
     std::vector<GHOST_PointerInfoWin32> &outPointerInfo, WPARAM wParam, LPARAM lParam)
 {
+  if (!useTabletAPI(GHOST_kTabletNative)) {
+    return GHOST_kFailure;
+  }
+
   GHOST_TInt32 pointerId = GET_POINTERID_WPARAM(wParam);
   GHOST_TInt32 isPrimary = IS_POINTER_PRIMARY_WPARAM(wParam);
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
