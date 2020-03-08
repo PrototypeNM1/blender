@@ -50,7 +50,7 @@ class GHOST_EventCursor : public GHOST_Event {
   {
     m_cursorEventData.x = x;
     m_cursorEventData.y = y;
-    m_cursorEventData.tablet = tablet ? *tablet : window->GetTabletData();
+    m_cursorEventData.tablet = tablet ? *tablet : GHOST_TABLET_DATA_DEFAULT;
     m_data = &m_cursorEventData;
   }
 

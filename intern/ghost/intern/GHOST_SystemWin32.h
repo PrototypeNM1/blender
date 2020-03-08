@@ -72,6 +72,13 @@ class GHOST_SystemWin32 : public GHOST_System {
   GHOST_TUns64 performanceCounterToMillis(__int64 perf_ticks) const;
 
   /**
+   * This method converts system ticks into milliseconds since the start of the
+   * system process.
+   * \return The number of milliseconds since the start of the system process.
+   */
+  GHOST_TUns64 tickCountToMillis(__int64 ticks) const;
+
+  /**
    * Returns the system time.
    * Returns the number of milliseconds since the start of the system process.
    * This overloaded method uses the high frequency timer if available.
@@ -302,13 +309,13 @@ class GHOST_SystemWin32 : public GHOST_System {
    * \param type      The type of event to create.
    * \param window    The window receiving the event (the active window).
    * \param mask      The button mask of this event.
-   * \param td        The tablet data of this event.
    * \return The event created.
    */
   static GHOST_EventButton *processButtonEvent(GHOST_TEventType type,
                                                GHOST_WindowWin32 *window,
-                                               GHOST_TButtonMask mask,
-                                               GHOST_TabletData *td);
+                                               GHOST_TButtonMask mask);
+
+  static void processWintabEvents(GHOST_WindowWin32 *window, GHOST_TEventType type);
 
   /**
    * Creates pointer event.
@@ -437,6 +444,8 @@ class GHOST_SystemWin32 : public GHOST_System {
   __int64 m_freq;
   /** High frequency timer variable. */
   __int64 m_start;
+  /** Low frequency timer variable. */
+  __int64 m_lfstart;
   /** AltGr on current keyboard layout. */
   bool m_hasAltGr;
   /** language identifier. */
@@ -449,6 +458,9 @@ class GHOST_SystemWin32 : public GHOST_System {
 
   /** Wheel delta accumulator */
   int m_wheelDeltaAccum;
+
+  // Whether a tablet stylus is being tracked
+  bool m_tabletInRange;
 };
 
 inline void GHOST_SystemWin32::retrieveModifierKeys(GHOST_ModifierKeys &keys) const

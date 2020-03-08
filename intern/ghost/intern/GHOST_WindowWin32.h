@@ -36,7 +36,8 @@
 #endif
 
 #include <wintab.h>
-#define PACKETDATA (PK_BUTTONS | PK_NORMAL_PRESSURE | PK_ORIENTATION | PK_CURSOR)
+#define PACKETDATA \
+  (PK_BUTTONS | PK_NORMAL_PRESSURE | PK_ORIENTATION | PK_CURSOR | PK_X | PK_Y | PK_TIME)
 #define PACKETMODE PK_BUTTONS
 #include <pktdef.h>
 
@@ -47,7 +48,8 @@ class GHOST_DropTargetWin32;
 typedef UINT(API *GHOST_WIN32_WTInfo)(UINT, UINT, LPVOID);
 typedef HCTX(API *GHOST_WIN32_WTOpen)(HWND, LPLOGCONTEXTA, BOOL);
 typedef BOOL(API *GHOST_WIN32_WTClose)(HCTX);
-typedef BOOL(API *GHOST_WIN32_WTPacket)(HCTX, UINT, LPVOID);
+typedef BOOL(API *GHOST_WIN32_WTPacketsGet)(HCTX, int, LPVOID);
+typedef int(API *GHOST_WIN32_WTQueueSizeGet)(HCTX);
 typedef BOOL(API *GHOST_WIN32_WTEnable)(HCTX, BOOL);
 typedef BOOL(API *GHOST_WIN32_WTOverlap)(HCTX, BOOL);
 
@@ -228,6 +230,14 @@ struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 isPrimary;
   GHOST_TButtonMask buttonMask;
   POINT pixelLocation;
+  GHOST_TUns64 time;
+  GHOST_TabletData tabletData;
+};
+
+struct GHOST_WintabInfoWin32 {
+  GHOST_TInt32 x, y;
+  GHOST_TEventType type;
+  GHOST_TButtonMask button;
   GHOST_TUns64 time;
   GHOST_TabletData tabletData;
 };
@@ -437,21 +447,16 @@ class GHOST_WindowWin32 : public GHOST_Window {
    */
   void destructWintab();
 
-  const GHOST_TabletData &GetTabletData()
-  {
-    return m_tabletData;
-  }
-
-  void setTabletData(GHOST_TabletData *tabletData);
   bool useTabletAPI(GHOST_TTabletAPI api) const;
   GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
                                 WPARAM wParam,
                                 LPARAM lParam);
 
-  void processWin32TabletActivateEvent(WORD state);
-  void processWin32TabletInitEvent();
-  void processWin32TabletEvent(WPARAM wParam, LPARAM lParam);
-  void bringTabletContextToFront();
+  void processWintabActivateEvent(bool active);
+  void processWintabProximityEvent(bool inRange);
+  GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
+  GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo,
+                               GHOST_TEventType type);
 
   GHOST_TSuccess beginFullScreen() const
   {
@@ -464,6 +469,8 @@ class GHOST_WindowWin32 : public GHOST_Window {
   }
 
   GHOST_TUns16 getDPIHint() override;
+
+  bool getMousePressed() const;
 
   /** if the window currently resizing */
   bool m_inLiveResize;
@@ -545,9 +552,6 @@ class GHOST_WindowWin32 : public GHOST_Window {
   static const wchar_t *s_windowClassName;
   static const int s_maxTitleLength;
 
-  /** Tablet data for GHOST */
-  GHOST_TabletData m_tabletData;
-
   /* Wintab API */
   struct {
     /** WinTab dll handle */
@@ -557,7 +561,8 @@ class GHOST_WindowWin32 : public GHOST_Window {
     GHOST_WIN32_WTInfo info;
     GHOST_WIN32_WTOpen open;
     GHOST_WIN32_WTClose close;
-    GHOST_WIN32_WTPacket packet;
+    GHOST_WIN32_WTPacketsGet packetsGet;
+    GHOST_WIN32_WTQueueSizeGet queueSizeGet;
     GHOST_WIN32_WTEnable enable;
     GHOST_WIN32_WTOverlap overlap;
 

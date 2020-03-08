@@ -49,7 +49,7 @@ class GHOST_EventButton : public GHOST_Event {
       : GHOST_Event(time, type, window)
   {
     m_buttonEventData.button = button;
-    m_buttonEventData.tablet = tablet ? *tablet : window->GetTabletData();
+    m_buttonEventData.tablet = tablet ? *tablet : GHOST_TABLET_DATA_DEFAULT;
     m_data = &m_buttonEventData;
   }
 
