@@ -69,7 +69,7 @@ class GHOST_SystemWin32 : public GHOST_System {
    * system process.
    * \return The number of milliseconds since the start of the system process.
    */
-  GHOST_TUns64 performanceCounterToMillis(__int64 count) const;
+  GHOST_TUns64 performanceCounterToMillis(__int64 perf_ticks) const;
 
   /**
    * Returns the system time.

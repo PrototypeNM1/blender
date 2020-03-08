@@ -233,10 +233,10 @@ GHOST_SystemWin32::~GHOST_SystemWin32()
   toggleConsole(1);
 }
 
-GHOST_TUns64 GHOST_SystemWin32::performanceCounterToMillis(__int64 count) const
+GHOST_TUns64 GHOST_SystemWin32::performanceCounterToMillis(__int64 perf_ticks) const
 {
   // Calculate the time passed since system initialization.
-  __int64 delta = 1000 * (count - m_start);
+  __int64 delta = (perf_ticks - m_start) * 1000;
 
   GHOST_TUns64 t = (GHOST_TUns64)(delta / m_freq);
   return t;
