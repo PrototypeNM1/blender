@@ -1111,7 +1111,6 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
     outPointerInfo[i].tabletData.Pressure = 1.0f;
     outPointerInfo[i].tabletData.Xtilt = 0.0f;
     outPointerInfo[i].tabletData.Ytilt = 0.0f;
-    outPointerInfo[i].isInContact = pointerApiInfo.pointerFlags & POINTER_FLAG_INCONTACT;
     outPointerInfo[i].time = system->performanceCounterToMillis(pointerApiInfo.PerformanceCount);
 
     if (pointerPenInfo[i].penMask & PEN_MASK_PRESSURE) {

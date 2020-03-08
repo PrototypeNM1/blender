@@ -226,7 +226,6 @@ typedef BOOL(WINAPI *GHOST_WIN32_GetPointerTouchInfoHistory)(UINT32 pointerId,
 
 struct GHOST_PointerInfoWin32 {
   GHOST_TInt32 pointerId;
-  GHOST_TInt32 isInContact;
   GHOST_TInt32 isPrimary;
   GHOST_TButtonMask buttonMask;
   POINT pixelLocation;
