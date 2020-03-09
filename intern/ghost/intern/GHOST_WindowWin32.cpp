@@ -326,8 +326,8 @@ GHOST_WindowWin32::~GHOST_WindowWin32()
   }
 
   if (m_wintab.handle) {
-    if (m_wintab.close && m_wintab.tablet) {
-      m_wintab.close(m_wintab.tablet);
+    if (m_wintab.close && m_wintab.context) {
+      m_wintab.close(m_wintab.context);
     }
 
     FreeLibrary(m_wintab.handle);
@@ -992,7 +992,7 @@ void GHOST_WindowWin32::initializeTabletApi()
 void GHOST_WindowWin32::initializeWintab()
 {
   // return if wintab library handle doesn't exist or wintab is already initialized
-  if (!m_wintab.handle || m_wintab.tablet) {
+  if (!m_wintab.handle || m_wintab.context) {
     return;
   }
 
@@ -1036,18 +1036,18 @@ void GHOST_WindowWin32::initializeWintab()
     }
 
     // The Wintab spec says we must open the context disabled if we are using cursor masks.
-    m_wintab.tablet = m_wintab.open(m_hWnd, &lc, FALSE);
-    if (m_wintab.enable && m_wintab.tablet) {
-      m_wintab.enable(m_wintab.tablet, TRUE);
+    m_wintab.context = m_wintab.open(m_hWnd, &lc, FALSE);
+    if (m_wintab.enable && m_wintab.context) {
+      m_wintab.enable(m_wintab.context, TRUE);
     }
   }
 }
 
 void GHOST_WindowWin32::destructWintab()
 {
-  if (m_wintab.close && m_wintab.tablet) {
-    m_wintab.close(m_wintab.tablet);
-    m_wintab.tablet = NULL;
+  if (m_wintab.close && m_wintab.context) {
+    m_wintab.close(m_wintab.context);
+    m_wintab.context = NULL;
   }
 }
 
@@ -1139,9 +1139,9 @@ void GHOST_WindowWin32::processWintabActivateEvent(bool active)
     return;
   }
 
-  if (m_wintab.enable && m_wintab.overlap && m_wintab.tablet) {
-    m_wintab.enable(m_wintab.tablet, active);
-    m_wintab.overlap(m_wintab.tablet, active);
+  if (m_wintab.enable && m_wintab.overlap && m_wintab.context) {
+    m_wintab.enable(m_wintab.context, active);
+    m_wintab.overlap(m_wintab.context, active);
   }
 }
 
@@ -1168,7 +1168,7 @@ void GHOST_WindowWin32::processWintabProximityEvent(bool inRange)
   }
 
   // Let's see if we can initialize tablet here
-  if (m_wintab.info && m_wintab.tablet) {
+  if (m_wintab.info && m_wintab.context) {
     AXIS Pressure, Orientation[3]; /* The maximum tablet size */
 
     BOOL pressureSupport = m_wintab.info(WTI_DEVICES, DVC_NPRESSURE, &Pressure);
@@ -1222,16 +1222,16 @@ GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin3
     return GHOST_kFailure;
   }
 
-  if (!(m_wintab.packetsGet && m_wintab.queueSizeGet && m_wintab.tablet)) {
+  if (!(m_wintab.packetsGet && m_wintab.queueSizeGet && m_wintab.context)) {
     return GHOST_kFailure;
   }
 
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
   GHOST_TSuccess ret = GHOST_kFailure;
 
-  const int queueSize = m_wintab.queueSizeGet(m_wintab.tablet);
+  const int queueSize = m_wintab.queueSizeGet(m_wintab.context);
   auto pkts = std::vector<PACKET>(queueSize);
-  const int numPackets = m_wintab.packetsGet(m_wintab.tablet, queueSize, pkts.data());
+  const int numPackets = m_wintab.packetsGet(m_wintab.context, queueSize, pkts.data());
   outWintabInfo.resize(numPackets);
 
   for (int i = 0; i < numPackets; i++) {

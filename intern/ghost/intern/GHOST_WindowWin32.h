@@ -565,7 +565,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
     GHOST_WIN32_WTOverlap overlap;
 
     /** Stores the Tablet context if detected Tablet features using WinTab.dll */
-    HCTX tablet;
+    HCTX context;
     LONG maxPressure;
     LONG maxAzimuth, maxAltitude;
   } m_wintab;
