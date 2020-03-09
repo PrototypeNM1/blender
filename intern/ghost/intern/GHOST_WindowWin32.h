@@ -562,6 +562,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
     /** Stores the Tablet context if detected Tablet features using WinTab.dll */
     HCTX context;
+    UINT num_devices;
     LONG maxPressure;
     LONG maxAzimuth, maxAltitude;
   } m_wintab;

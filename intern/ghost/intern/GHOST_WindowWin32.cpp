@@ -1022,6 +1022,8 @@ void GHOST_WindowWin32::initializeWintab()
     m_wintab.info(WTI_DEVICES, DVC_X, &TabletX);
     m_wintab.info(WTI_DEVICES, DVC_Y, &TabletY);
 
+    m_wintab.info(WTI_INTERFACE, IFC_NDEVICES, &m_wintab.num_devices);
+
     /* get the max pressure, to divide into a float */
     BOOL pressureSupport = m_wintab.info(WTI_DEVICES, DVC_NPRESSURE, &Pressure);
     m_wintab.maxPressure = pressureSupport ? Pressure.axMax : 0;
@@ -1162,7 +1164,7 @@ bool GHOST_WindowWin32::useTabletAPI(GHOST_TTabletAPI api) const
     return true;
   }
   else if (m_system->getTabletAPI() == GHOST_kTabletAutomatic) {
-    if (m_wintab.handle)
+    if (m_wintab.num_devices)
       return api == GHOST_kTabletWintab;
     else
       return api == GHOST_kTabletNative;
@@ -1194,6 +1196,13 @@ void GHOST_WindowWin32::processWintabProximityEvent(bool inRange)
     else { /* no so dont do tilt stuff */
       m_wintab.maxAzimuth = m_wintab.maxAltitude = 0;
     }
+  }
+}
+
+void GHOST_WindowWin32::processWintabInfoChangeEvent(LPARAM lParam)
+{
+  if (LOWORD(lParam) == WTI_INTERFACE && HIWORD(lParam) == IFC_NDEVICES) {
+    m_wintab.info(WTI_INTERFACE, IFC_NDEVICES, &m_wintab.num_devices);
   }
 }
 

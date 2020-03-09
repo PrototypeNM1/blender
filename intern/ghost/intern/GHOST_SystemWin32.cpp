@@ -1517,6 +1517,10 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
         ////////////////////////////////////////////////////////////////////////
         // Wintab events, processed
         ////////////////////////////////////////////////////////////////////////
+        case WT_INFOCHANGE: {
+          window->processWintabInfoChangeEvent(lParam);
+          break;
+        }
         case WT_PROXIMITY: {
           bool inRange = LOWORD(lParam);
           window->processWintabProximityEvent(inRange);
