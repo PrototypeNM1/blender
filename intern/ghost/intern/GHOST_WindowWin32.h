@@ -438,15 +438,48 @@ class GHOST_WindowWin32 : public GHOST_Window {
    */
   void updateTabletApi();
 
+  /*
+   * Query whether given tablet API should be used.
+   * \param api   Tablet API to test.
+   */
   bool useTabletAPI(GHOST_TTabletAPI api) const;
+
+  /*
+   * Translate WM_POINTER events into GHOST_PointerInfoWin32 structs.
+   * \param outPointerInfo   Storage to return resulting GHOST_PointerInfoWin32 structs
+   * \param wParam           WPARAM of the event
+   * \param lParam           LPARAM of the event
+   */
   GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
                                 WPARAM wParam,
                                 LPARAM lParam);
 
+  /*
+   * Handle Wintab configuration when window Activate events occur.
+   * \param active   Whether the window is now active.
+   */
   void processWintabActivateEvent(bool active);
+
+  /*
+   * Handle Wintab coordinate changes when DisplayChange events occur.
+   */
   void processWintabDisplayChangeEvent();
+
+  /*
+   * Set tablet details when a cursor enters range
+   */
   void processWintabProximityEvent();
+
+  /*
+   * Handle Wintab info changes such as change in number of connected tablets.
+   * \param lParam   LPARAM of the event
+   */
   void processWintabInfoChangeEvent(LPARAM lParam);
+
+  /*
+   * Translate Wintab packets into GHOST_WintabInfoWin32 structs.
+   * \param outWintabInfo   Storage to return resulting GHOST_WintabInfoWin32 structs
+   */
   GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);
 
   GHOST_TSuccess beginFullScreen() const
@@ -571,7 +604,11 @@ class GHOST_WindowWin32 : public GHOST_Window {
    */
   void initializeWintab();
 
+  /**
+   * Convert Wintab system mapped (mouse) buttons into Ghost button mask
+   */
   GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
+
   GHOST_TWindowState m_normal_state;
 
   /** user32 dll handle*/
