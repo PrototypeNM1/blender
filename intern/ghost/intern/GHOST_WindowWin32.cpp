@@ -301,6 +301,8 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
     // Get API functions
     m_wintab.info = (GHOST_WIN32_WTInfo)::GetProcAddress(m_wintab.handle, "WTInfoA");
     m_wintab.open = (GHOST_WIN32_WTOpen)::GetProcAddress(m_wintab.handle, "WTOpenA");
+    m_wintab.get = (GHOST_WIN32_WTGet)::GetProcAddress(m_wintab.handle, "WTGetA");
+    m_wintab.set = (GHOST_WIN32_WTSet)::GetProcAddress(m_wintab.handle, "WTSetA");
     m_wintab.close = (GHOST_WIN32_WTClose)::GetProcAddress(m_wintab.handle, "WTClose");
     m_wintab.packetsGet = (GHOST_WIN32_WTPacketsGet)::GetProcAddress(m_wintab.handle,
                                                                      "WTPacketsGet");
@@ -309,10 +311,12 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
     m_wintab.enable = (GHOST_WIN32_WTEnable)::GetProcAddress(m_wintab.handle, "WTEnable");
     m_wintab.overlap = (GHOST_WIN32_WTOverlap)::GetProcAddress(m_wintab.handle, "WTOverlap");
 
-    if (useTabletAPI(GHOST_kTabletWintab)) {
-      initializeWintab();
-    }
+    initializeWintab();
   }
+
+  // Determine which tablet API to use and enable it.
+  updateTabletApi();
+
   CoCreateInstance(
       CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (LPVOID *)&m_Bar);
 }
@@ -979,13 +983,12 @@ GHOST_TSuccess GHOST_WindowWin32::hasCursorShape(GHOST_TStandardCursor cursorSha
   return (getStandardCursor(cursorShape)) ? GHOST_kSuccess : GHOST_kFailure;
 }
 
-void GHOST_WindowWin32::initializeTabletApi()
+void GHOST_WindowWin32::updateTabletApi()
 {
-  if (useTabletAPI(GHOST_kTabletWintab)) {
-    initializeWintab();
-  }
-  else {
-    destructWintab();
+  bool use_wintab = useTabletAPI(GHOST_kTabletWintab);
+  if (m_wintab.enable && m_wintab.overlap && m_wintab.context) {
+    m_wintab.enable(m_wintab.context, use_wintab);
+    m_wintab.overlap(m_wintab.context, use_wintab);
   }
 }
 
@@ -1037,17 +1040,6 @@ void GHOST_WindowWin32::initializeWintab()
 
     // The Wintab spec says we must open the context disabled if we are using cursor masks.
     m_wintab.context = m_wintab.open(m_hWnd, &lc, FALSE);
-    if (m_wintab.enable && m_wintab.context) {
-      m_wintab.enable(m_wintab.context, TRUE);
-    }
-  }
-}
-
-void GHOST_WindowWin32::destructWintab()
-{
-  if (m_wintab.close && m_wintab.context) {
-    m_wintab.close(m_wintab.context);
-    m_wintab.context = NULL;
   }
 }
 
@@ -1142,6 +1134,25 @@ void GHOST_WindowWin32::processWintabActivateEvent(bool active)
   if (m_wintab.enable && m_wintab.overlap && m_wintab.context) {
     m_wintab.enable(m_wintab.context, active);
     m_wintab.overlap(m_wintab.context, active);
+  }
+}
+
+void GHOST_WindowWin32::processWintabDisplayChangeEvent()
+{
+  LOGCONTEXT lc_sys = {0}, lc_curr = {0};
+
+  lc_sys.lcOptions |= CXO_SYSTEM;
+  if (m_wintab.open && m_wintab.info && m_wintab.get && m_wintab.set &&
+      m_wintab.info(WTI_DEFSYSCTX, 0, &lc_sys)) {
+    LOGCONTEXT lc_curr = {0};
+    m_wintab.get(m_wintab.context, &lc_curr);
+
+    lc_curr.lcOutOrgX = lc_sys.lcOutOrgX;
+    lc_curr.lcOutOrgY = lc_sys.lcOutOrgY;
+    lc_curr.lcOutExtX = lc_sys.lcOutExtX;
+    lc_curr.lcOutExtY = -lc_sys.lcOutExtY;
+
+    m_wintab.set(m_wintab.context, &lc_curr);
   }
 }
 

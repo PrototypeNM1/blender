@@ -46,6 +46,8 @@ class GHOST_DropTargetWin32;
 
 // typedefs for WinTab functions to allow dynamic loading
 typedef UINT(API *GHOST_WIN32_WTInfo)(UINT, UINT, LPVOID);
+typedef BOOL(API *GHOST_WIN32_WTGet)(HCTX, LPLOGCONTEXTA);
+typedef BOOL(API *GHOST_WIN32_WTSet)(HCTX, LPLOGCONTEXTA);
 typedef HCTX(API *GHOST_WIN32_WTOpen)(HWND, LPLOGCONTEXTA, BOOL);
 typedef BOOL(API *GHOST_WIN32_WTClose)(HCTX);
 typedef BOOL(API *GHOST_WIN32_WTPacketsGet)(HCTX, int, LPVOID);
@@ -434,17 +436,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
   /**
    * Handle setup and switch between Wintab and Pointer APIs
    */
-  void initializeTabletApi();
-
-  /**
-   * Wintab setup
-   */
-  void initializeWintab();
-
-  /**
-   * Wintab teardown
-   */
-  void destructWintab();
+  void updateTabletApi();
 
   bool useTabletAPI(GHOST_TTabletAPI api) const;
   GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
@@ -452,7 +444,9 @@ class GHOST_WindowWin32 : public GHOST_Window {
                                 LPARAM lParam);
 
   void processWintabActivateEvent(bool active);
+  void processWintabDisplayChangeEvent();
   void processWintabProximityEvent(bool inRange);
+  void processWintabInfoChangeEvent(LPARAM lParam);
   GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
   GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);
 
@@ -557,6 +551,8 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
     /** API functions */
     GHOST_WIN32_WTInfo info;
+    GHOST_WIN32_WTGet get;
+    GHOST_WIN32_WTSet set;
     GHOST_WIN32_WTOpen open;
     GHOST_WIN32_WTClose close;
     GHOST_WIN32_WTPacketsGet packetsGet;
@@ -569,6 +565,11 @@ class GHOST_WindowWin32 : public GHOST_Window {
     LONG maxPressure;
     LONG maxAzimuth, maxAltitude;
   } m_wintab;
+
+  /**
+   * Wintab setup
+   */
+  void initializeWintab();
 
   GHOST_TWindowState m_normal_state;
 
