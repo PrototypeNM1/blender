@@ -445,7 +445,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   void processWintabActivateEvent(bool active);
   void processWintabDisplayChangeEvent();
-  void processWintabProximityEvent(bool inRange);
+  void processWintabProximityEvent();
   void processWintabInfoChangeEvent(LPARAM lParam);
   GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
   GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);

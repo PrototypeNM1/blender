@@ -1174,7 +1174,7 @@ bool GHOST_WindowWin32::useTabletAPI(GHOST_TTabletAPI api) const
   }
 }
 
-void GHOST_WindowWin32::processWintabProximityEvent(bool inRange)
+void GHOST_WindowWin32::processWintabProximityEvent()
 {
   if (!useTabletAPI(GHOST_kTabletWintab)) {
     return;

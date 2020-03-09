@@ -1523,7 +1523,9 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
         }
         case WT_PROXIMITY: {
           bool inRange = LOWORD(lParam);
-          window->processWintabProximityEvent(inRange);
+          if (inRange) {
+            window->processWintabProximityEvent();
+          }
           system->m_tabletInRange = inRange;
           break;
         }
