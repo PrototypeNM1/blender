@@ -447,7 +447,6 @@ class GHOST_WindowWin32 : public GHOST_Window {
   void processWintabDisplayChangeEvent();
   void processWintabProximityEvent();
   void processWintabInfoChangeEvent(LPARAM lParam);
-  GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
   GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);
 
   GHOST_TSuccess beginFullScreen() const
@@ -572,6 +571,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
    */
   void initializeWintab();
 
+  GHOST_TSuccess wintabMouseToGhost(UINT cursor, DWORD buttons, GHOST_TButtonMask &buttonMask);
   GHOST_TWindowState m_normal_state;
 
   /** user32 dll handle*/
