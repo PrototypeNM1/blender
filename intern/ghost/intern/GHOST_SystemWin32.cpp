@@ -195,7 +195,7 @@ typedef HRESULT(API *GHOST_WIN32_SetProcessDpiAwareness)(PROCESS_DPI_AWARENESS);
 typedef BOOL(API *GHOST_WIN32_EnableNonClientDpiScaling)(HWND);
 
 GHOST_SystemWin32::GHOST_SystemWin32()
-    : m_hasPerformanceCounter(false), m_freq(0), m_start(0), m_lfstart(0), m_tabletInRange(false)
+    : m_hasPerformanceCounter(false), m_freq(0), m_start(0), m_lfstart(0)
 {
   m_displayManager = new GHOST_DisplayManagerWin32();
   GHOST_ASSERT(m_displayManager, "GHOST_SystemWin32::GHOST_SystemWin32(): m_displayManager==0\n");
@@ -941,7 +941,7 @@ GHOST_EventButton *GHOST_SystemWin32::processButtonEvent(GHOST_TEventType type,
     window->updateMouseCapture(MouseReleased);
   }
 
-  if (system->m_tabletInRange) {
+  if (window->m_tabletInRange) {
     if (window->useTabletAPI(GHOST_kTabletWintab)) {
       processWintabEvents(window);
     }
@@ -1017,7 +1017,7 @@ void GHOST_SystemWin32::processPointerEvents(
 
   switch (type) {
     case WM_POINTERENTER:
-      system->m_tabletInRange = true;
+      window->m_tabletInRange = true;
       system->pushEvent(new GHOST_EventCursor(pointerInfo[0].time,
                                               GHOST_kEventCursorMove,
                                               window,
@@ -1061,7 +1061,7 @@ void GHOST_SystemWin32::processPointerEvents(
       window->updateMouseCapture(MouseReleased);
       break;
     case WM_POINTERLEAVE:
-      system->m_tabletInRange = false;
+      window->m_tabletInRange = false;
       system->pushEvent(new GHOST_EventButton(pointerInfo[0].time,
                                               GHOST_kEventCursorMove,
                                               window,
@@ -1082,7 +1082,7 @@ GHOST_EventCursor *GHOST_SystemWin32::processCursorEvent(GHOST_TEventType type,
   GHOST_TInt32 x_screen, y_screen;
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
-  if (system->m_tabletInRange) {
+  if (window->m_tabletInRange) {
     if (window->useTabletAPI(GHOST_kTabletWintab)) {
       // Disregard cursor hover prior to the pen being pressed. This is done to guarantee that when
       // a WM_*BUTTONDOWN event occurs, there is a packet readable from WTPacketsGet which has an
@@ -1523,10 +1523,7 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
         }
         case WT_PROXIMITY: {
           bool inRange = LOWORD(lParam);
-          if (inRange) {
-            window->processWintabProximityEvent();
-          }
-          system->m_tabletInRange = inRange;
+          window->processWintabProximityEvent(inRange);
           break;
         }
         ////////////////////////////////////////////////////////////////////////

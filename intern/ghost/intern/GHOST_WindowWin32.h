@@ -468,7 +468,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
   /*
    * Set tablet details when a cursor enters range
    */
-  void processWintabProximityEvent();
+  void processWintabProximityEvent(bool inRange);
 
   /*
    * Handle Wintab info changes such as change in number of connected tablets.
@@ -495,6 +495,9 @@ class GHOST_WindowWin32 : public GHOST_Window {
   GHOST_TUns16 getDPIHint() override;
 
   bool getMousePressed() const;
+
+  // Whether a tablet stylus is being tracked
+  bool m_tabletInRange;
 
   /** if the window currently resizing */
   bool m_inLiveResize;

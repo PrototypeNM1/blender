@@ -86,7 +86,8 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
       m_fpGetPointerPenInfoHistory(NULL),
       m_fpGetPointerTouchInfoHistory(NULL),
       m_parentWindowHwnd(parentwindow ? parentwindow->m_hWnd : NULL),
-      m_debug_context(is_debug)
+      m_debug_context(is_debug),
+      m_tabletInRange(false)
 {
   // Initialize tablet variables
   memset(&m_wintab, 0, sizeof(m_wintab));
@@ -1174,7 +1175,7 @@ bool GHOST_WindowWin32::useTabletAPI(GHOST_TTabletAPI api) const
   }
 }
 
-void GHOST_WindowWin32::processWintabProximityEvent()
+void GHOST_WindowWin32::processWintabProximityEvent(bool inRange)
 {
   if (!useTabletAPI(GHOST_kTabletWintab)) {
     return;
@@ -1197,6 +1198,8 @@ void GHOST_WindowWin32::processWintabProximityEvent()
       m_wintab.maxAzimuth = m_wintab.maxAltitude = 0;
     }
   }
+
+  m_tabletInRange = inRange;
 }
 
 void GHOST_WindowWin32::processWintabInfoChangeEvent(LPARAM lParam)

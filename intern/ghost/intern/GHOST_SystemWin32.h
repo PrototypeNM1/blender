@@ -458,9 +458,6 @@ class GHOST_SystemWin32 : public GHOST_System {
 
   /** Wheel delta accumulator */
   int m_wheelDeltaAccum;
-
-  // Whether a tablet stylus is being tracked
-  bool m_tabletInRange;
 };
 
 inline void GHOST_SystemWin32::retrieveModifierKeys(GHOST_ModifierKeys &keys) const
