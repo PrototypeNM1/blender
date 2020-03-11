@@ -1076,8 +1076,7 @@ void GHOST_SystemWin32::processPointerEvents(
   system->setCursorPosition(pointerInfo[0].pixelLocation.x, pointerInfo[0].pixelLocation.y);
 }
 
-GHOST_EventCursor *GHOST_SystemWin32::processCursorEvent(GHOST_TEventType type,
-                                                         GHOST_WindowWin32 *window)
+GHOST_EventCursor *GHOST_SystemWin32::processCursorEvent(GHOST_WindowWin32 *window)
 {
   GHOST_TInt32 x_screen, y_screen;
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
@@ -1574,7 +1573,7 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
           }
           break;
         case WM_MOUSEMOVE:
-          event = processCursorEvent(GHOST_kEventCursorMove, window);
+          event = processCursorEvent(window);
           break;
         case WM_MOUSEWHEEL: {
           /* The WM_MOUSEWHEEL message is sent to the focus window
