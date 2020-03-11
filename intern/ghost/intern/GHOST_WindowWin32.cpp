@@ -313,10 +313,9 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
     m_wintab.overlap = (GHOST_WIN32_WTOverlap)::GetProcAddress(m_wintab.handle, "WTOverlap");
 
     initializeWintab();
+    // Determine which tablet API to use and enable it.
+    updateWintab(true);
   }
-
-  // Determine which tablet API to use and enable it.
-  updateTabletApi();
 
   CoCreateInstance(
       CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (LPVOID *)&m_Bar);
@@ -984,12 +983,16 @@ GHOST_TSuccess GHOST_WindowWin32::hasCursorShape(GHOST_TStandardCursor cursorSha
   return (getStandardCursor(cursorShape)) ? GHOST_kSuccess : GHOST_kFailure;
 }
 
-void GHOST_WindowWin32::updateTabletApi()
+void GHOST_WindowWin32::updateWintab(bool active)
 {
-  bool use_wintab = useTabletAPI(GHOST_kTabletWintab);
   if (m_wintab.enable && m_wintab.overlap && m_wintab.context) {
-    m_wintab.enable(m_wintab.context, use_wintab);
-    m_wintab.overlap(m_wintab.context, use_wintab);
+    bool enable = active && useTabletAPI(GHOST_kTabletWintab);
+    m_wintab.enable(m_wintab.context, enable);
+    m_wintab.overlap(m_wintab.context, enable);
+
+    if (!enable) {
+      m_wintab.num_sys_but = 0;
+    }
   }
 }
 
@@ -1143,18 +1146,6 @@ GHOST_TSuccess GHOST_WindowWin32::getPointerInfo(
   }
 
   return GHOST_kSuccess;
-}
-
-void GHOST_WindowWin32::processWintabActivateEvent(bool active)
-{
-  if (!useTabletAPI(GHOST_kTabletWintab)) {
-    return;
-  }
-
-  if (m_wintab.enable && m_wintab.overlap && m_wintab.context) {
-    m_wintab.enable(m_wintab.context, active);
-    m_wintab.overlap(m_wintab.context, active);
-  }
 }
 
 void GHOST_WindowWin32::processWintabDisplayChangeEvent()

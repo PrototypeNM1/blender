@@ -436,8 +436,9 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   /**
    * Handle setup and switch between Wintab and Pointer APIs
+   * \param active    Whether the window is or will be in an active state
    */
-  void updateTabletApi();
+  void updateWintab(bool active);
 
   /*
    * Query whether given tablet API should be used.
@@ -454,12 +455,6 @@ class GHOST_WindowWin32 : public GHOST_Window {
   GHOST_TSuccess getPointerInfo(std::vector<GHOST_PointerInfoWin32> &outPointerInfo,
                                 WPARAM wParam,
                                 LPARAM lParam);
-
-  /*
-   * Handle Wintab configuration when window Activate events occur.
-   * \param active   Whether the window is now active.
-   */
-  void processWintabActivateEvent(bool active);
 
   /*
    * Handle Wintab coordinate changes when DisplayChange events occur.

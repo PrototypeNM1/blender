@@ -1273,9 +1273,9 @@ void GHOST_SystemWin32::setTabletAPI(GHOST_TTabletAPI api)
 {
   m_tabletAPI = api;
 
-  for (GHOST_IWindow *iter_win : getWindowManager()->getWindows()) {
-    GHOST_WindowWin32 *iter_win32win = (GHOST_WindowWin32 *)iter_win;
-    iter_win32win->updateTabletApi();
+  GHOST_WindowWin32 *active_win = (GHOST_WindowWin32*)getWindowManager()->getActiveWindow();
+  if (active_win) {
+    active_win->updateWintab(true);
   }
 }
 
@@ -1663,7 +1663,8 @@ LRESULT WINAPI GHOST_SystemWin32::s_wndProc(HWND hwnd, UINT msg, WPARAM wParam, 
              * will not be dispatched to OUR active window if we minimize one of OUR windows. */
             if (LOWORD(wParam) == WA_INACTIVE)
               window->lostMouseCapture();
-            window->processWintabActivateEvent(LOWORD(wParam) != WA_INACTIVE);
+
+            window->updateWintab(LOWORD(wParam) != WA_INACTIVE);
 
             lResult = ::DefWindowProc(hwnd, msg, wParam, lParam);
             break;
