@@ -1009,8 +1009,8 @@ void GHOST_WindowWin32::initializeWintab()
   if (m_wintab.open && m_wintab.info && m_wintab.queueSizeGet && m_wintab.queueSizeSet &&
       m_wintab.info(WTI_DEFSYSCTX, 0, &lc)) {
     // Now init the tablet
-    /* The maximum tablet size, pressure and orientation (tilt) */
-    AXIS TabletX, TabletY, Pressure, Orientation[3];
+    /* The pressure and orientation (tilt) */
+    AXIS Pressure, Orientation[3];
 
     // Open a Wintab context
 
@@ -1021,10 +1021,6 @@ void GHOST_WindowWin32::initializeWintab()
     // Wacom maps y origin to the tablet's bottom
     // Invert to match Windows y origin mapping to the screen top
     lc.lcOutExtY = -lc.lcOutExtY;
-
-    /* Set the entire tablet as active */
-    m_wintab.info(WTI_DEVICES, DVC_X, &TabletX);
-    m_wintab.info(WTI_DEVICES, DVC_Y, &TabletY);
 
     m_wintab.info(WTI_INTERFACE, IFC_NDEVICES, &m_wintab.num_devices);
 
