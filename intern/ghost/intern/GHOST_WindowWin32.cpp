@@ -1003,7 +1003,6 @@ void GHOST_WindowWin32::initializeWintab()
   // Let's see if we can initialize tablet here.
   // Check if WinTab available by getting system context info.
   LOGCONTEXT lc = {0};
-  lc.lcOptions |= CXO_SYSTEM;
   if (m_wintab.open && m_wintab.info && m_wintab.queueSizeGet && m_wintab.queueSizeSet &&
       m_wintab.info(WTI_DEFSYSCTX, 0, &lc)) {
     // Now init the tablet
