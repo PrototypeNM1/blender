@@ -52,6 +52,7 @@ typedef HCTX(API *GHOST_WIN32_WTOpen)(HWND, LPLOGCONTEXTA, BOOL);
 typedef BOOL(API *GHOST_WIN32_WTClose)(HCTX);
 typedef BOOL(API *GHOST_WIN32_WTPacketsGet)(HCTX, int, LPVOID);
 typedef int(API *GHOST_WIN32_WTQueueSizeGet)(HCTX);
+typedef BOOL(API *GHOST_WIN32_WTQueueSizeSet)(HCTX, int);
 typedef BOOL(API *GHOST_WIN32_WTEnable)(HCTX, BOOL);
 typedef BOOL(API *GHOST_WIN32_WTOverlap)(HCTX, BOOL);
 
@@ -592,6 +593,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
     GHOST_WIN32_WTClose close;
     GHOST_WIN32_WTPacketsGet packetsGet;
     GHOST_WIN32_WTQueueSizeGet queueSizeGet;
+    GHOST_WIN32_WTQueueSizeSet queueSizeSet;
     GHOST_WIN32_WTEnable enable;
     GHOST_WIN32_WTOverlap overlap;
 
@@ -600,6 +602,8 @@ class GHOST_WindowWin32 : public GHOST_Window {
     UINT num_devices;
     LONG maxPressure;
     LONG maxAzimuth, maxAltitude;
+    /* Queue size doesn't change once set, so reuse the same buffer */
+    std::vector<PACKET> pkts;
   } m_wintab;
 
   /**

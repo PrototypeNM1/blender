@@ -87,11 +87,9 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
       m_fpGetPointerTouchInfoHistory(NULL),
       m_parentWindowHwnd(parentwindow ? parentwindow->m_hWnd : NULL),
       m_debug_context(is_debug),
-      m_tabletInRange(false)
+      m_tabletInRange(false),
+      m_wintab()
 {
-  // Initialize tablet variables
-  memset(&m_wintab, 0, sizeof(m_wintab));
-
   // Create window
   if (state != GHOST_kWindowStateFullScreen) {
     RECT rect;
@@ -309,6 +307,8 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
                                                                      "WTPacketsGet");
     m_wintab.queueSizeGet = (GHOST_WIN32_WTQueueSizeGet)::GetProcAddress(m_wintab.handle,
                                                                          "WTQueueSizeGet");
+    m_wintab.queueSizeSet = (GHOST_WIN32_WTQueueSizeSet)::GetProcAddress(m_wintab.handle,
+                                                                         "WTQueueSizeSet");
     m_wintab.enable = (GHOST_WIN32_WTEnable)::GetProcAddress(m_wintab.handle, "WTEnable");
     m_wintab.overlap = (GHOST_WIN32_WTOverlap)::GetProcAddress(m_wintab.handle, "WTOverlap");
 
@@ -1004,7 +1004,8 @@ void GHOST_WindowWin32::initializeWintab()
   // Check if WinTab available by getting system context info.
   LOGCONTEXT lc = {0};
   lc.lcOptions |= CXO_SYSTEM;
-  if (m_wintab.open && m_wintab.info && m_wintab.info(WTI_DEFSYSCTX, 0, &lc)) {
+  if (m_wintab.open && m_wintab.info && m_wintab.queueSizeGet && m_wintab.queueSizeSet &&
+      m_wintab.info(WTI_DEFSYSCTX, 0, &lc)) {
     // Now init the tablet
     /* The maximum tablet size, pressure and orientation (tilt) */
     AXIS TabletX, TabletY, Pressure, Orientation[3];
@@ -1043,6 +1044,23 @@ void GHOST_WindowWin32::initializeWintab()
 
     // The Wintab spec says we must open the context disabled if we are using cursor masks.
     m_wintab.context = m_wintab.open(m_hWnd, &lc, FALSE);
+
+    // Wintab provides no way to determine the maximum queue size aside from checking if attempts
+    // to change the queue size are successful.
+    const int maxQueue = 500;
+    int initialQueueSize = m_wintab.queueSizeGet(m_wintab.context);
+    int queueSize = initialQueueSize;
+
+    while (queueSize < maxQueue) {
+      int testSize = min(queueSize + initialQueueSize, maxQueue);
+      if (m_wintab.queueSizeSet(m_wintab.context, testSize)) {
+        queueSize = testSize;
+      }
+      else {
+        break;
+      }
+    }
+    m_wintab.pkts.resize(queueSize);
   }
 }
 
@@ -1245,20 +1263,19 @@ GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin3
     return GHOST_kFailure;
   }
 
-  if (!(m_wintab.packetsGet && m_wintab.queueSizeGet && m_wintab.context)) {
+  if (!(m_wintab.packetsGet && m_wintab.context)) {
     return GHOST_kFailure;
   }
 
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
   GHOST_TSuccess ret = GHOST_kFailure;
 
-  const int queueSize = m_wintab.queueSizeGet(m_wintab.context);
-  auto pkts = std::vector<PACKET>(queueSize);
-  const int numPackets = m_wintab.packetsGet(m_wintab.context, queueSize, pkts.data());
+  const int numPackets = m_wintab.packetsGet(
+      m_wintab.context, m_wintab.pkts.size(), m_wintab.pkts.data());
   outWintabInfo.resize(numPackets);
 
   for (int i = 0; i < numPackets; i++) {
-    PACKET pkt = pkts[i];
+    PACKET pkt = m_wintab.pkts[i];
     GHOST_TabletData m_tabletData = GHOST_TABLET_DATA_DEFAULT;
     switch (pkt.pkCursor % 3) { /* % 3 for multiple devices ("DualTrack") */
       case 0:
