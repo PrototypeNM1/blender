@@ -1259,7 +1259,6 @@ GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin3
   }
 
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)GHOST_System::getSystem();
-  GHOST_TSuccess ret = GHOST_kFailure;
 
   const int numPackets = m_wintab.packetsGet(
       m_wintab.context, m_wintab.pkts.size(), m_wintab.pkts.data());
@@ -1341,11 +1340,9 @@ GHOST_TSuccess GHOST_WindowWin32::getWintabInfo(std::vector<GHOST_WintabInfoWin3
     // Wintab does not support performance counters, so use low frequency counter instead
     outWintabInfo[i].time = system->tickCountToMillis(pkt.pkTime);
     outWintabInfo[i].tabletData = m_tabletData;
-
-    ret = GHOST_kSuccess;
   }
 
-  return ret;
+  return GHOST_kSuccess;
 }
 
 GHOST_TUns16 GHOST_WindowWin32::getDPIHint()

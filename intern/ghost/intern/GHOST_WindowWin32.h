@@ -475,6 +475,7 @@ class GHOST_WindowWin32 : public GHOST_Window {
   /*
    * Translate Wintab packets into GHOST_WintabInfoWin32 structs.
    * \param outWintabInfo   Storage to return resulting GHOST_WintabInfoWin32 structs
+   * \return                Success if able to read packets, even if there are none
    */
   GHOST_TSuccess getWintabInfo(std::vector<GHOST_WintabInfoWin32> &outWintabInfo);
 
