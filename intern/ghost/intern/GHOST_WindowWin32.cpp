@@ -1225,14 +1225,19 @@ GHOST_TSuccess GHOST_WindowWin32::wintabMouseToGhost(UINT cursor,
   BYTE logicalButtons[numButtons] = {0};
   BYTE systemButtons[numButtons] = {0};
 
+  m_wintab.info(WTI_CURSORS + cursor, CSR_BUTTONMAP, &logicalButtons);
+  m_wintab.info(WTI_CURSORS + cursor, CSR_SYSBTNMAP, &systemButtons);
+
   if (wintabButton >= numButtons) {
     return GHOST_kFailure;
   }
 
-  m_wintab.info(WTI_CURSORS + cursor, CSR_BUTTONMAP, &logicalButtons);
-  m_wintab.info(WTI_CURSORS + cursor, CSR_SYSBTNMAP, &systemButtons);
+  BYTE lb = logicalButtons[LOWORD(wintabButton)];
+  if (lb >= numButtons) {
+    return GHOST_kFailure;  
+  }
 
-  switch (systemButtons[logicalButtons[LOWORD(wintabButton)]]) {
+  switch (systemButtons[lb]) {
     case SBN_LCLICK:
       ghostButton = GHOST_kButtonMaskLeft;
       return GHOST_kSuccess;
