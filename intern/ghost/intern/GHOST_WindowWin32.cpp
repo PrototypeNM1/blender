@@ -1146,10 +1146,8 @@ void GHOST_WindowWin32::processWintabDisplayChangeEvent()
 {
   LOGCONTEXT lc_sys = {0}, lc_curr = {0};
 
-  lc_sys.lcOptions |= CXO_SYSTEM;
-  if (m_wintab.open && m_wintab.info && m_wintab.get && m_wintab.set &&
-      m_wintab.info(WTI_DEFSYSCTX, 0, &lc_sys)) {
-    LOGCONTEXT lc_curr = {0};
+  if (m_wintab.info && m_wintab.get && m_wintab.set && m_wintab.info(WTI_DEFSYSCTX, 0, &lc_sys)) {
+
     m_wintab.get(m_wintab.context, &lc_curr);
 
     lc_curr.lcOutOrgX = lc_sys.lcOutOrgX;
