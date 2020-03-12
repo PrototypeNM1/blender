@@ -1053,6 +1053,16 @@ void GHOST_WindowWin32::initializeWintab()
         queueSize = testSize;
       }
       else {
+        /* From Windows Wintab Documentation for WTQueueSizeSet:
+         * "If the return value is zero, the context has no queue because the function deletes the
+         * original queue before attempting to create a new one. The application must continue
+         * calling the function with a smaller queue size until the function returns a non - zero
+         * value."
+         *
+         * In our case we start with a known valid queue size and in the event of failure roll
+         * back to the last valid queue size.
+         */
+        m_wintab.queueSizeSet(m_wintab.context, queueSize);
         break;
       }
     }
