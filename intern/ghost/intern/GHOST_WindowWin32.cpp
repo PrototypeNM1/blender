@@ -295,23 +295,21 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
   }
 
   // Initialize Wintab
-  m_wintab.handle = ::LoadLibrary("Wintab32.dll");
-  if (m_wintab.handle) {
-    // Get API functions
-    m_wintab.info = (GHOST_WIN32_WTInfo)::GetProcAddress(m_wintab.handle, "WTInfoA");
-    m_wintab.open = (GHOST_WIN32_WTOpen)::GetProcAddress(m_wintab.handle, "WTOpenA");
-    m_wintab.get = (GHOST_WIN32_WTGet)::GetProcAddress(m_wintab.handle, "WTGetA");
-    m_wintab.set = (GHOST_WIN32_WTSet)::GetProcAddress(m_wintab.handle, "WTSetA");
-    m_wintab.close = (GHOST_WIN32_WTClose)::GetProcAddress(m_wintab.handle, "WTClose");
-    m_wintab.packetsGet = (GHOST_WIN32_WTPacketsGet)::GetProcAddress(m_wintab.handle,
-                                                                     "WTPacketsGet");
-    m_wintab.queueSizeGet = (GHOST_WIN32_WTQueueSizeGet)::GetProcAddress(m_wintab.handle,
-                                                                         "WTQueueSizeGet");
-    m_wintab.queueSizeSet = (GHOST_WIN32_WTQueueSizeSet)::GetProcAddress(m_wintab.handle,
-                                                                         "WTQueueSizeSet");
-    m_wintab.enable = (GHOST_WIN32_WTEnable)::GetProcAddress(m_wintab.handle, "WTEnable");
-    m_wintab.overlap = (GHOST_WIN32_WTOverlap)::GetProcAddress(m_wintab.handle, "WTOverlap");
-
+  if ((m_wintab.handle = ::LoadLibrary("Wintab32.dll")) &&
+      // Get API functions
+      (m_wintab.info = (GHOST_WIN32_WTInfo)::GetProcAddress(m_wintab.handle, "WTInfoA")) &&
+      (m_wintab.open = (GHOST_WIN32_WTOpen)::GetProcAddress(m_wintab.handle, "WTOpenA")) &&
+      (m_wintab.get = (GHOST_WIN32_WTGet)::GetProcAddress(m_wintab.handle, "WTGetA")) &&
+      (m_wintab.set = (GHOST_WIN32_WTSet)::GetProcAddress(m_wintab.handle, "WTSetA")) &&
+      (m_wintab.close = (GHOST_WIN32_WTClose)::GetProcAddress(m_wintab.handle, "WTClose")) &&
+      (m_wintab.packetsGet = (GHOST_WIN32_WTPacketsGet)::GetProcAddress(m_wintab.handle,
+                                                                        "WTPacketsGet")) &&
+      (m_wintab.queueSizeGet = (GHOST_WIN32_WTQueueSizeGet)::GetProcAddress(m_wintab.handle,
+                                                                            "WTQueueSizeGet")) &&
+      (m_wintab.queueSizeSet = (GHOST_WIN32_WTQueueSizeSet)::GetProcAddress(m_wintab.handle,
+                                                                            "WTQueueSizeSet")) &&
+      (m_wintab.enable = (GHOST_WIN32_WTEnable)::GetProcAddress(m_wintab.handle, "WTEnable")) &&
+      (m_wintab.overlap = (GHOST_WIN32_WTOverlap)::GetProcAddress(m_wintab.handle, "WTOverlap"))) {
     initializeWintab();
     // Determine which tablet API to use and enable it.
     updateWintab(true);
