@@ -294,9 +294,7 @@ GHOST_WindowWin32::GHOST_WindowWin32(GHOST_SystemWin32 *system,
         m_user32, "GetPointerTouchInfoHistory");
   }
 
-  // Initialize Wintab
   if ((m_wintab.handle = ::LoadLibrary("Wintab32.dll")) &&
-      // Get API functions
       (m_wintab.info = (GHOST_WIN32_WTInfo)::GetProcAddress(m_wintab.handle, "WTInfoA")) &&
       (m_wintab.open = (GHOST_WIN32_WTOpen)::GetProcAddress(m_wintab.handle, "WTOpenA")) &&
       (m_wintab.get = (GHOST_WIN32_WTGet)::GetProcAddress(m_wintab.handle, "WTGetA")) &&
@@ -778,6 +776,24 @@ bool GHOST_WindowWin32::getMousePressed() const
   return m_nPressedButtons;
 }
 
+bool GHOST_WindowWin32::wintabSysButPressed() const
+{
+  return m_wintab.num_sys_but;
+}
+
+void GHOST_WindowWin32::updateWintabSysBut(GHOST_MouseCaptureEventWin32 event)
+{
+  switch (event) {
+    case MousePressed:
+      m_wintab.num_sys_but++;
+      break;
+    case MouseReleased:
+      if (m_wintab.num_sys_but)
+        m_wintab.num_sys_but--;
+      break;
+  }
+}
+
 HCURSOR GHOST_WindowWin32::getStandardCursor(GHOST_TStandardCursor shape) const
 {
   // Convert GHOST cursor to Windows OEM cursor
@@ -989,6 +1005,9 @@ void GHOST_WindowWin32::updateWintab(bool active)
     m_wintab.overlap(m_wintab.context, enable);
 
     if (!enable) {
+      // WT_PROXIMITY event doesn't occur unless tablet's cursor leaves the proximity while the
+      // window is in active.
+      m_tabletInRange = false;
       m_wintab.num_sys_but = 0;
     }
   }
@@ -1214,6 +1233,7 @@ void GHOST_WindowWin32::processWintabProximityEvent(bool inRange)
 
 void GHOST_WindowWin32::processWintabInfoChangeEvent(LPARAM lParam)
 {
+  // Update number of connected Wintab digitizers
   if (LOWORD(lParam) == WTI_INTERFACE && HIWORD(lParam) == IFC_NDEVICES) {
     m_wintab.info(WTI_INTERFACE, IFC_NDEVICES, &m_wintab.num_devices);
   }
@@ -1236,7 +1256,7 @@ GHOST_TSuccess GHOST_WindowWin32::wintabMouseToGhost(UINT cursor,
 
   BYTE lb = logicalButtons[LOWORD(wintabButton)];
   if (lb >= numButtons) {
-    return GHOST_kFailure;  
+    return GHOST_kFailure;
   }
 
   switch (systemButtons[lb]) {

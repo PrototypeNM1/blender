@@ -315,10 +315,15 @@ class GHOST_SystemWin32 : public GHOST_System {
                                                GHOST_WindowWin32 *window,
                                                GHOST_TButtonMask mask);
 
-  static void processWintabEvents(GHOST_WindowWin32 *window);
+  /**
+   * Creates tablet events from Wintab events.
+   * \param type      The type of pointer event
+   * \param window    The window receiving the event (the active window).
+   */
+  static GHOST_TSuccess processWintabEvents(GHOST_TEventType type, GHOST_WindowWin32 *window);
 
   /**
-   * Creates pointer event.
+   * Creates tablet events from pointer events.
    * \param type      The type of pointer event
    * \param window    The window receiving the event (the active window).
    * \param wParam    The wParam from the wndproc

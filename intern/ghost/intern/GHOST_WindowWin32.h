@@ -440,13 +440,13 @@ class GHOST_WindowWin32 : public GHOST_Window {
    */
   void updateWintab(bool active);
 
-  /*
+  /**
    * Query whether given tablet API should be used.
    * \param api   Tablet API to test.
    */
   bool useTabletAPI(GHOST_TTabletAPI api) const;
 
-  /*
+  /**
    * Translate WM_POINTER events into GHOST_PointerInfoWin32 structs.
    * \param outPointerInfo   Storage to return resulting GHOST_PointerInfoWin32 structs
    * \param wParam           WPARAM of the event
@@ -456,23 +456,23 @@ class GHOST_WindowWin32 : public GHOST_Window {
                                 WPARAM wParam,
                                 LPARAM lParam);
 
-  /*
+  /**
    * Handle Wintab coordinate changes when DisplayChange events occur.
    */
   void processWintabDisplayChangeEvent();
 
-  /*
+  /**
    * Set tablet details when a cursor enters range
    */
   void processWintabProximityEvent(bool inRange);
 
-  /*
+  /**
    * Handle Wintab info changes such as change in number of connected tablets.
    * \param lParam   LPARAM of the event
    */
   void processWintabInfoChangeEvent(LPARAM lParam);
 
-  /*
+  /**
    * Translate Wintab packets into GHOST_WintabInfoWin32 structs.
    * \param outWintabInfo   Storage to return resulting GHOST_WintabInfoWin32 structs
    * \return                Success if able to read packets, even if there are none
@@ -491,9 +491,26 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
   GHOST_TUns16 getDPIHint() override;
 
+  /**
+   * Get whether there are currently any mouse buttons pressed
+   * \return    True if there are any currently pressed mouse buttons
+   */
   bool getMousePressed() const;
 
-  // Whether a tablet stylus is being tracked
+  /**
+   * Get if there are currently pressed Wintab buttons associated to a Windows mouse button press
+   * \return    True if there are currently any pressed Wintab buttons associated to a Windows
+   *            mouse button press
+   */
+  bool wintabSysButPressed() const;
+
+  /**
+   * Register a Wintab button has been associated to a Windows mouse button press
+   * \param event   Whether the button was pressed or released
+   */
+  void updateWintabSysBut(GHOST_MouseCaptureEventWin32 event);
+
+  /** Whether a tablet stylus is being tracked */
   bool m_tabletInRange;
 
   /** if the window currently resizing */
@@ -595,7 +612,10 @@ class GHOST_WindowWin32 : public GHOST_Window {
 
     /** Stores the Tablet context if detected Tablet features using WinTab.dll */
     HCTX context;
+    /** Number of connected Wintab digitizers */
     UINT num_devices;
+    /** Number of cursors currently in contact mapped to system buttons */
+    GHOST_TUns8 num_sys_but;
     LONG maxPressure;
     LONG maxAzimuth, maxAltitude;
     /* Queue size doesn't change once set, so reuse the same buffer */

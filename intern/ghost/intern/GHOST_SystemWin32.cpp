@@ -941,59 +941,99 @@ GHOST_EventButton *GHOST_SystemWin32::processButtonEvent(GHOST_TEventType type,
     window->updateMouseCapture(MouseReleased);
   }
 
-  if (window->m_tabletInRange) {
-    if (window->useTabletAPI(GHOST_kTabletWintab)) {
-      processWintabEvents(window);
+  /* Check for active Wintab mouse emulation in addition to a tablet in range because a proximity
+   * leave event might have fired before the Windows mouse up event, thus there are still tablet
+   * events to grab. The described behavior was observed in a Wacom Bamboo CTE-450.
+   */
+  if (window->m_tabletInRange || window->wintabSysButPressed()) {
+    if (window->useTabletAPI(GHOST_kTabletWintab) && processWintabEvents(type, window)) {
+      // Wintab processing only handles in-contact events.
+      return NULL;
+    }
+    else if (window->useTabletAPI(GHOST_kTabletNative)) {
+      // Win32 Pointer processing handles input while in-range and in-contact events.
+      return NULL;
     }
 
-    // Tablet events already queued
-    return NULL;
+    // If using Wintab and this was a button down event but no button event was queued while
+    // processing Wintab packets, fall through to create a button event.
   }
+
   return new GHOST_EventButton(system->getMilliSeconds(), type, window, mask);
 }
 
-void GHOST_SystemWin32::processWintabEvents(GHOST_WindowWin32 *window)
+GHOST_TSuccess GHOST_SystemWin32::processWintabEvents(GHOST_TEventType type,
+                                                      GHOST_WindowWin32 *window)
 {
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
-  std::vector<GHOST_WintabInfoWin32> wintabInfo;
-  if (!window->getWintabInfo(wintabInfo)) {
-    return;
+  /* Only process Wintab packets if we can correlate them to a Window's mouse button event. When a
+   * button event associated to a mouse button by Wintab occurs outside of WM_*BUTTON events,
+   * there's no way to tell if other simultaneously pressed non-mouse mapped buttons are associated
+   * to a modifier key (shift, alt, ctrl) or a system event (scroll, etc.) and thus it is not
+   * possible to determine if a mouse click event should occur.
+   */
+  if (!window->getMousePressed() && !window->wintabSysButPressed()) {
+    return GHOST_kFailure;
   }
 
-  for (auto info : wintabInfo) {
+  std::vector<GHOST_WintabInfoWin32> wintabInfo;
+  if (!window->getWintabInfo(wintabInfo)) {
+    return GHOST_kFailure;
+  }
+
+  auto wtiIter = wintabInfo.begin();
+
+  /* We only process events that correlate to a mouse button events, so there may exist Wintab
+   * button down events that were instead mapped to e.g. scroll still in the queue. We need to
+   * skip those and find the last button down mapped to mouse buttons.
+   */
+  if (!window->wintabSysButPressed()) {
+    for (auto it = wtiIter; it != wintabInfo.end(); it++) {
+      if (it->type == GHOST_kEventButtonDown) {
+        wtiIter = it;
+      }
+    }
+  }
+
+  for (; wtiIter != wintabInfo.end(); wtiIter++) {
+    auto info = *wtiIter;
+
     switch (info.type) {
+      case GHOST_kEventButtonDown: {
+        /* While changing windows with a tablet, Window's mouse button events normally occur before
+         * tablet proximity events, so a button up event can't be differentiated as occurring from
+         * a Wintab tablet or a normal mouse and a Ghost button event will always be generated.
+         *
+         * If we were called during a button down event create a ghost button down event, otherwise
+         * don't duplicate the prior button down as it interrupts drawing immediately after
+         * changing a window.
+         */
+        if (type == GHOST_kEventButtonDown) {
+          // Move cursor to point of contact because GHOST_EventButton does not include position.
+          system->pushEvent(new GHOST_EventCursor(
+              info.time, GHOST_kEventCursorMove, window, info.x, info.y, &info.tabletData));
+          system->pushEvent(
+              new GHOST_EventButton(info.time, info.type, window, info.button, &info.tabletData));
+        }
+        window->updateWintabSysBut(MousePressed);
+        break;
+      }
       case GHOST_kEventCursorMove:
         system->pushEvent(new GHOST_EventCursor(
             info.time, GHOST_kEventCursorMove, window, info.x, info.y, &info.tabletData));
         break;
-      case GHOST_kEventButtonDown: {
-        // Move cursor to point of contact because GHOST_EventButton does not include position.
-        system->pushEvent(new GHOST_EventCursor(
-            info.time, GHOST_kEventCursorMove, window, info.x, info.y, &info.tabletData));
-
-        // If no mouse button has been pressed, then a driver specific button map is blocking
-        // normal mouse emulation and we should do the same. This can happen when an errant
-        // WM_*BUTTONUP event fires due to Wintab mouse emulation when it shouldn't, while a
-        // previously queued Wintab button down event mapped to a mouse button remains in the
-        // queue.
-        //
-        // The described behavior was observed to occur with Wacom's Bamboo CTE-450 when pressing
-        // touch the stylus to the pad twice while a button mapped to scroll was pressed.
-        if (window->getMousePressed()) {
-          system->pushEvent(
-              new GHOST_EventButton(info.time, info.type, window, info.button, &info.tabletData));
-        }
-        break;
-      }
       case GHOST_kEventButtonUp:
         system->pushEvent(
             new GHOST_EventButton(info.time, info.type, window, info.button, &info.tabletData));
+        window->updateWintabSysBut(MouseReleased);
         break;
       default:
         break;
     }
   }
+
+  return GHOST_kSuccess;
 }
 
 void GHOST_SystemWin32::processPointerEvents(
@@ -1081,30 +1121,24 @@ GHOST_EventCursor *GHOST_SystemWin32::processCursorEvent(GHOST_WindowWin32 *wind
   GHOST_TInt32 x_screen, y_screen;
   GHOST_SystemWin32 *system = (GHOST_SystemWin32 *)getSystem();
 
-  if (window->m_tabletInRange) {
-    if (window->useTabletAPI(GHOST_kTabletWintab)) {
-      // Disregard cursor hover prior to the pen being pressed. This is done to guarantee that when
-      // a WM_*BUTTONDOWN event occurs, there is a packet readable from WTPacketsGet which has an
-      // mouse (system) button associated to it. When a button event associated to a mouse button
-      // by Wintab occurs outside of WM_*BUTTONDOWN, there's no way to tell if other simultaneously
-      // pressed non-mouse mapped buttons are associated to a modifier key (shift, alt, ctrl) or a
-      // system event (scroll, etc.) and thus it is not possible to determine if a mouse click
-      // event should occur.
-      if (window->getMousePressed()) {
-        processWintabEvents(window);
-        return NULL;
-      }
-      // ... else do normal mouse cursor handling for wintab until pressed.
-    }
-    else {
-      // Tablet input handled in WM_POINTER* events.
+  if (window->m_tabletInRange || window->wintabSysButPressed()) {
+    if (window->useTabletAPI(GHOST_kTabletWintab) &&
+        processWintabEvents(GHOST_kEventCursorMove, window)) {
       return NULL;
     }
+    else if (window->useTabletAPI(GHOST_kTabletNative)) {
+      // Tablet input handled in WM_POINTER* events. WM_MOUSEMOVE events in response to tablet
+      // input aren't normally generated when using WM_POINTER events, but manually moving the
+      // system cursor as we do in WM_POINTER handling does.
+      return NULL;
+    }
+
+    // If using Wintab but no button event is currently active, fall through to default handling
   }
 
   system->getCursorPosition(x_screen, y_screen);
 
-  if (window->getCursorGrabModeIsWarp()) {
+  if (window->getCursorGrabModeIsWarp() && !window->m_tabletInRange) {
     GHOST_TInt32 x_new = x_screen;
     GHOST_TInt32 y_new = y_screen;
     GHOST_TInt32 x_accum, y_accum;
@@ -1273,7 +1307,7 @@ void GHOST_SystemWin32::setTabletAPI(GHOST_TTabletAPI api)
 {
   m_tabletAPI = api;
 
-  GHOST_WindowWin32 *active_win = (GHOST_WindowWin32*)getWindowManager()->getActiveWindow();
+  GHOST_WindowWin32 *active_win = (GHOST_WindowWin32 *)getWindowManager()->getActiveWindow();
   if (active_win) {
     active_win->updateWintab(true);
   }
